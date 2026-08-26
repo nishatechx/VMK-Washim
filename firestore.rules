@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Public read and write for admission scrutiny terminal and QR mobile scanner
+    match /qr_uploads/{uploadId} {
+      allow read, write: if true;
+    }
+    match /tickets/{ticketId} {
+      allow read, write: if true;
+    }
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

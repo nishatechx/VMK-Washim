@@ -1,0 +1,31 @@
+{
+  "entities": {
+    "qr_uploads": {
+      "title": "QR Uploaded Documents",
+      "description": "Candidate documents uploaded via QR code mobile scan or PC import",
+      "fields": {
+        "sessionId": { "type": "string", "description": "Session ID string" },
+        "name": { "type": "string", "description": "File name" },
+        "type": { "type": "string", "description": "MIME type" },
+        "size": { "type": "number", "description": "File size in bytes" },
+        "dataUrl": { "type": "string", "description": "Base64 data URL representation" },
+        "uploadedAt": { "type": "string", "description": "ISO timestamp" },
+        "isDownloadedToSoftware": { "type": "boolean", "description": "Flag for software availability" },
+        "verifiedStamp": { "type": "boolean", "description": "Verification status" },
+        "category": { "type": "string", "description": "Document category" }
+      }
+    },
+    "tickets": {
+      "title": "Admission & WhatsApp Tickets",
+      "description": "Generated tickets and inquiry tokens",
+      "fields": {
+        "tokenNumber": { "type": "string", "description": "Token/Ticket number" },
+        "candidateName": { "type": "string", "description": "Candidate name" },
+        "phone": { "type": "string", "description": "Phone number" },
+        "category": { "type": "string", "description": "Inquiry category" },
+        "createdAt": { "type": "string", "description": "Timestamp" },
+        "status": { "type": "string", "description": "Ticket status" }
+      }
+    }
+  }
+}
