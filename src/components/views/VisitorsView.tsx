@@ -28,6 +28,7 @@ import {
 import { VisitorRecord, VisitorType, UserProfile } from '../../types/auth';
 import {
   getVisitorRecords,
+  subscribeToVisitors,
   saveVisitorRecord,
   deleteVisitorRecord,
   checkoutVisitor,
@@ -64,6 +65,14 @@ export const VisitorsView: React.FC<VisitorsViewProps> = ({ currentUser, onNavig
   // Modal State for Quick Popup Entry / Edit
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVisitor, setEditingVisitor] = useState<VisitorRecord | null>(null);
+
+  // Real-time Firestore visitors sync
+  useEffect(() => {
+    const unsub = subscribeToVisitors((list) => {
+      setVisitors(list);
+    });
+    return () => unsub();
+  }, []);
 
   // Refresh sheets config periodically or when modal closes
   useEffect(() => {

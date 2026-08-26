@@ -20,6 +20,7 @@ import {
 import { StudentRecord, UserProfile } from '../../types/auth';
 import {
   getStudentRecords,
+  subscribeToStudents,
   saveStudentRecord,
   deleteStudentRecord,
 } from '../../services/authService';
@@ -41,6 +42,13 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
+
+  useEffect(() => {
+    const unsub = subscribeToStudents((list) => {
+      setStudents(list);
+    });
+    return () => unsub();
+  }, []);
 
   // Add Student Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);

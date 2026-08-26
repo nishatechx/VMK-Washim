@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Users,
   UserPlus,
@@ -29,6 +29,7 @@ import {
 import { UserProfile, TabPermission, FeaturePermission } from '../../types/auth';
 import {
   getAllUsers,
+  subscribeToUsers,
   saveUser,
   deleteUser,
   AVAILABLE_TABS,
@@ -88,6 +89,13 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
     message: '',
     type: '',
   });
+
+  useEffect(() => {
+    const unsubscribe = subscribeToUsers((updatedUsers) => {
+      setUsers(updatedUsers);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const refreshUsersList = () => {
     setUsers(getAllUsers());

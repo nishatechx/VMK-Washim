@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, User, Eye, EyeOff, AlertCircle, ArrowRight, ShieldCheck, KeyRound } from 'lucide-react';
-import { authenticate } from '../services/authService';
+import { authenticateAsync } from '../services/authService';
 import { UserProfile } from '../types/auth';
 
 interface LoginScreenProps {
@@ -14,21 +14,30 @@ export function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!username.trim() || !password.trim()) {
+      setErrorMsg('Please enter both User ID and Password.');
+      return;
+    }
+
     setErrorMsg(null);
     setIsLoading(true);
 
-    setTimeout(() => {
-      const user = authenticate(username, password);
+    try {
+      const user = await authenticateAsync(username, password);
 
       if (user) {
         onLoginSuccess(user);
       } else {
-        setErrorMsg('Invalid User ID or Password. Please check credentials.');
+        setErrorMsg('Invalid User ID or Password. Please check credentials or contact DNO.');
         setIsLoading(false);
       }
-    }, 250);
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setErrorMsg('Unable to verify credentials. Please check your connection.');
+      setIsLoading(false);
+    }
   };
 
   const bgImageUrl =

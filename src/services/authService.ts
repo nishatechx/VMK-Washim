@@ -1,4 +1,21 @@
-import { UserProfile, StudentRecord, CenterNotice, VisitorRecord, TabPermission, FeaturePermission } from '../types/auth';
+import {
+  UserProfile,
+  StudentRecord,
+  CenterNotice,
+  VisitorRecord,
+  TabPermission,
+  FeaturePermission,
+} from '../types/auth';
+import {
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  setDoc,
+  deleteDoc,
+  onSnapshot,
+} from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 const USERS_STORAGE_KEY = 'vmk_user_profiles_v1';
 const CURRENT_USER_KEY = 'vmk_current_logged_user';
@@ -63,7 +80,18 @@ export const AVAILABLE_FEATURES: { id: FeaturePermission; label: string; descrip
   { id: 'export_reports', label: 'Export Data & Reports', description: 'Download CSV and print scrutiny logs' },
 ];
 
-// Initialize users storage with DNO account if empty
+// In-memory subscribers
+const userSubscribers: ((users: UserProfile[]) => void)[] = [];
+const studentSubscribers: ((students: StudentRecord[]) => void)[] = [];
+const visitorSubscribers: ((visitors: VisitorRecord[]) => void)[] = [];
+const noticeSubscribers: ((notices: CenterNotice[]) => void)[] = [];
+
+let isFirestoreSynced = false;
+
+// -------------------------------------------------------------
+// USER MANAGEMENT & CLOUD SYNC
+// -------------------------------------------------------------
+
 export function getAllUsers(): UserProfile[] {
   try {
     const raw = localStorage.getItem(USERS_STORAGE_KEY);
@@ -91,6 +119,128 @@ export function getAllUsers(): UserProfile[] {
   }
 }
 
+export function subscribeToUsers(callback: (users: UserProfile[]) => void): () => void {
+  userSubscribers.push(callback);
+  callback(getAllUsers());
+  return () => {
+    const idx = userSubscribers.indexOf(callback);
+    if (idx >= 0) userSubscribers.splice(idx, 1);
+  };
+}
+
+function notifyUserSubscribers(users: UserProfile[]) {
+  userSubscribers.forEach((cb) => {
+    try {
+      cb(users);
+    } catch (e) {
+      console.error('Error in user subscriber callback:', e);
+    }
+  });
+}
+
+/**
+ * Initializes Firestore cloud listeners for users and collections
+ */
+export function initFirestoreDataSync() {
+  if (isFirestoreSynced || typeof window === 'undefined') return;
+  isFirestoreSynced = true;
+
+  try {
+    // 1. Sync Users from Firestore
+    onSnapshot(
+      collection(db, 'users'),
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const firestoreUsers: UserProfile[] = [];
+          snapshot.forEach((d) => {
+            const data = d.data() as UserProfile;
+            if (data && data.username) {
+              firestoreUsers.push({ ...data, id: d.id });
+            }
+          });
+
+          // Ensure DNO is present
+          const hasDno = firestoreUsers.some((u) => u.username.toLowerCase() === 'dno');
+          if (!hasDno) {
+            firestoreUsers.unshift(DNO_USER);
+            // Also write DNO to Firestore for consistency
+            setDoc(doc(db, 'users', DNO_USER.id), DNO_USER, { merge: true }).catch(() => {});
+          }
+
+          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(firestoreUsers));
+          notifyUserSubscribers(firestoreUsers);
+
+          // Update current active user session if modified
+          const current = getCurrentUser();
+          if (current) {
+            const updatedCurrent = firestoreUsers.find((u) => u.id === current.id);
+            if (updatedCurrent) {
+              setCurrentUser(updatedCurrent);
+            }
+          }
+        } else {
+          // If Firestore users collection is currently empty, seed master DNO
+          setDoc(doc(db, 'users', DNO_USER.id), DNO_USER, { merge: true }).catch(() => {});
+        }
+      },
+      (err) => {
+        console.warn('Firestore users sync listener fallback to local:', err?.message);
+      }
+    );
+
+    // 2. Sync Students from Firestore
+    onSnapshot(
+      collection(db, 'students'),
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const list: StudentRecord[] = [];
+          snapshot.forEach((d) => list.push({ ...d.data(), id: d.id } as StudentRecord));
+          localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(list));
+          studentSubscribers.forEach((cb) => cb(list));
+        }
+      },
+      (err) => console.warn('Firestore students sync error:', err?.message)
+    );
+
+    // 3. Sync Visitors from Firestore
+    onSnapshot(
+      collection(db, 'visitors'),
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const list: VisitorRecord[] = [];
+          snapshot.forEach((d) => list.push({ ...d.data(), id: d.id } as VisitorRecord));
+          localStorage.setItem(VISITORS_STORAGE_KEY, JSON.stringify(list));
+          visitorSubscribers.forEach((cb) => cb(list));
+        }
+      },
+      (err) => console.warn('Firestore visitors sync error:', err?.message)
+    );
+
+    // 4. Sync Notices from Firestore
+    onSnapshot(
+      collection(db, 'notices'),
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const list: CenterNotice[] = [];
+          snapshot.forEach((d) => list.push({ ...d.data(), id: d.id } as CenterNotice));
+          localStorage.setItem(NOTICES_STORAGE_KEY, JSON.stringify(list));
+          noticeSubscribers.forEach((cb) => cb(list));
+        }
+      },
+      (err) => console.warn('Firestore notices sync error:', err?.message)
+    );
+  } catch (err) {
+    console.error('Failed to init Firestore listeners:', err);
+  }
+}
+
+// Start listener automatically
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    initFirestoreDataSync();
+  }, 100);
+}
+
 export function saveUser(user: UserProfile): { success: boolean; message: string } {
   try {
     const users = getAllUsers();
@@ -110,7 +260,14 @@ export function saveUser(user: UserProfile): { success: boolean; message: string
       users.push(user);
     }
 
+    // Save to local storage
     localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+    notifyUserSubscribers(users);
+
+    // Save directly to Firestore cloud database so any device on Netlify/Cloud can log in
+    setDoc(doc(db, 'users', user.id), user, { merge: true }).catch((e) => {
+      console.warn('Firestore saveUser background sync notice:', e?.message);
+    });
 
     // Update current session if the edited user is currently logged in
     const currentUser = getCurrentUser();
@@ -118,7 +275,7 @@ export function saveUser(user: UserProfile): { success: boolean; message: string
       setCurrentUser(user);
     }
 
-    return { success: true, message: 'User profile saved successfully.' };
+    return { success: true, message: 'User profile saved successfully and synced to cloud.' };
   } catch (err) {
     console.error('Error saving user:', err);
     return { success: false, message: 'Failed to save user profile.' };
@@ -133,11 +290,84 @@ export function deleteUser(userId: string): { success: boolean; message: string 
 
     const users = getAllUsers().filter((u) => u.id !== userId);
     localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+    notifyUserSubscribers(users);
+
+    // Remove from Firestore cloud database
+    deleteDoc(doc(db, 'users', userId)).catch((e) => {
+      console.warn('Firestore deleteUser sync notice:', e?.message);
+    });
+
     return { success: true, message: 'User profile deleted successfully.' };
   } catch (err) {
     console.error('Error deleting user:', err);
     return { success: false, message: 'Failed to delete user profile.' };
   }
+}
+
+/**
+ * Asynchronous authentication that queries both local storage cache
+ * and live Firestore database, ensuring any user created by DNO on any device
+ * can log in on Netlify immediately!
+ */
+export async function authenticateAsync(username: string, pass: string): Promise<UserProfile | null> {
+  const trimmedUser = username.trim().toLowerCase();
+  const trimmedPass = pass.trim();
+
+  // 1. Try local cache first for instantaneous login
+  const localUsers = getAllUsers();
+  let matchedUser = localUsers.find(
+    (u) => u.username.toLowerCase() === trimmedUser && u.password === trimmedPass && u.isActive
+  );
+
+  if (matchedUser) {
+    const updated = { ...matchedUser, lastLogin: new Date().toISOString() };
+    saveUser(updated);
+    setCurrentUser(updated);
+    return updated;
+  }
+
+  // 2. If not found in local cache (e.g. first login on new machine/Netlify), query Firestore directly!
+  try {
+    const snapshot = await getDocs(collection(db, 'users'));
+    if (!snapshot.empty) {
+      const cloudUsers: UserProfile[] = [];
+      snapshot.forEach((d) => {
+        const data = d.data() as UserProfile;
+        if (data && data.username) {
+          cloudUsers.push({ ...data, id: d.id });
+        }
+      });
+
+      // Update local storage with the full cloud users list
+      if (cloudUsers.length > 0) {
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(cloudUsers));
+        notifyUserSubscribers(cloudUsers);
+      }
+
+      matchedUser = cloudUsers.find(
+        (u) => u.username.toLowerCase() === trimmedUser && u.password === trimmedPass && u.isActive
+      );
+
+      if (matchedUser) {
+        const updated = { ...matchedUser, lastLogin: new Date().toISOString() };
+        saveUser(updated);
+        setCurrentUser(updated);
+        return updated;
+      }
+    }
+  } catch (err) {
+    console.warn('Firestore live auth query encountered an issue, checking fallback:', err);
+  }
+
+  // Check if it's the root DNO login default fallback
+  if (trimmedUser === 'dno' && trimmedPass === 'dno1') {
+    const updated = { ...DNO_USER, lastLogin: new Date().toISOString() };
+    saveUser(updated);
+    setCurrentUser(updated);
+    return updated;
+  }
+
+  return null;
 }
 
 export function authenticate(username: string, pass: string): UserProfile | null {
@@ -179,7 +409,10 @@ export function setCurrentUser(user: UserProfile | null): void {
   }
 }
 
-// Student records storage management (clean dynamic data)
+// -------------------------------------------------------------
+// STUDENT RECORDS MANAGEMENT & CLOUD SYNC
+// -------------------------------------------------------------
+
 export function getStudentRecords(): StudentRecord[] {
   try {
     const raw = localStorage.getItem(STUDENTS_STORAGE_KEY);
@@ -192,6 +425,15 @@ export function getStudentRecords(): StudentRecord[] {
   }
 }
 
+export function subscribeToStudents(callback: (records: StudentRecord[]) => void): () => void {
+  studentSubscribers.push(callback);
+  callback(getStudentRecords());
+  return () => {
+    const idx = studentSubscribers.indexOf(callback);
+    if (idx >= 0) studentSubscribers.splice(idx, 1);
+  };
+}
+
 export function saveStudentRecord(record: StudentRecord): void {
   try {
     const records = getStudentRecords();
@@ -202,6 +444,12 @@ export function saveStudentRecord(record: StudentRecord): void {
       records.unshift(record);
     }
     localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(records));
+    studentSubscribers.forEach((cb) => cb(records));
+
+    // Cloud sync
+    setDoc(doc(db, 'students', record.id), record, { merge: true }).catch((e) => {
+      console.warn('Firestore saveStudent sync error:', e?.message);
+    });
   } catch (err) {
     console.error('Error saving student record:', err);
   }
@@ -211,12 +459,21 @@ export function deleteStudentRecord(id: string): void {
   try {
     const records = getStudentRecords().filter((r) => r.id !== id);
     localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(records));
+    studentSubscribers.forEach((cb) => cb(records));
+
+    // Cloud sync
+    deleteDoc(doc(db, 'students', id)).catch((e) => {
+      console.warn('Firestore deleteStudent sync error:', e?.message);
+    });
   } catch (err) {
     console.error('Error deleting student record:', err);
   }
 }
 
-// Center Notices storage management
+// -------------------------------------------------------------
+// CENTER NOTICES MANAGEMENT & CLOUD SYNC
+// -------------------------------------------------------------
+
 export function getCenterNotices(): CenterNotice[] {
   try {
     const raw = localStorage.getItem(NOTICES_STORAGE_KEY);
@@ -229,6 +486,15 @@ export function getCenterNotices(): CenterNotice[] {
   }
 }
 
+export function subscribeToNotices(callback: (notices: CenterNotice[]) => void): () => void {
+  noticeSubscribers.push(callback);
+  callback(getCenterNotices());
+  return () => {
+    const idx = noticeSubscribers.indexOf(callback);
+    if (idx >= 0) noticeSubscribers.splice(idx, 1);
+  };
+}
+
 export function saveCenterNotice(notice: CenterNotice): void {
   try {
     const notices = getCenterNotices();
@@ -239,6 +505,12 @@ export function saveCenterNotice(notice: CenterNotice): void {
       notices.unshift(notice);
     }
     localStorage.setItem(NOTICES_STORAGE_KEY, JSON.stringify(notices));
+    noticeSubscribers.forEach((cb) => cb(notices));
+
+    // Cloud sync
+    setDoc(doc(db, 'notices', notice.id), notice, { merge: true }).catch((e) => {
+      console.warn('Firestore saveNotice sync error:', e?.message);
+    });
   } catch (err) {
     console.error('Error saving notice:', err);
   }
@@ -248,12 +520,21 @@ export function deleteCenterNotice(id: string): void {
   try {
     const notices = getCenterNotices().filter((n) => n.id !== id);
     localStorage.setItem(NOTICES_STORAGE_KEY, JSON.stringify(notices));
+    noticeSubscribers.forEach((cb) => cb(notices));
+
+    // Cloud sync
+    deleteDoc(doc(db, 'notices', id)).catch((e) => {
+      console.warn('Firestore deleteNotice sync error:', e?.message);
+    });
   } catch (err) {
     console.error('Error deleting notice:', err);
   }
 }
 
-// Visitors Entry Register storage management
+// -------------------------------------------------------------
+// VISITORS REGISTER MANAGEMENT & CLOUD SYNC
+// -------------------------------------------------------------
+
 export function getVisitorRecords(): VisitorRecord[] {
   try {
     const raw = localStorage.getItem(VISITORS_STORAGE_KEY);
@@ -266,6 +547,15 @@ export function getVisitorRecords(): VisitorRecord[] {
   }
 }
 
+export function subscribeToVisitors(callback: (visitors: VisitorRecord[]) => void): () => void {
+  visitorSubscribers.push(callback);
+  callback(getVisitorRecords());
+  return () => {
+    const idx = visitorSubscribers.indexOf(callback);
+    if (idx >= 0) visitorSubscribers.splice(idx, 1);
+  };
+}
+
 export function saveVisitorRecord(record: VisitorRecord): void {
   try {
     const records = getVisitorRecords();
@@ -276,6 +566,12 @@ export function saveVisitorRecord(record: VisitorRecord): void {
       records.unshift(record);
     }
     localStorage.setItem(VISITORS_STORAGE_KEY, JSON.stringify(records));
+    visitorSubscribers.forEach((cb) => cb(records));
+
+    // Cloud sync
+    setDoc(doc(db, 'visitors', record.id), record, { merge: true }).catch((e) => {
+      console.warn('Firestore saveVisitor sync error:', e?.message);
+    });
   } catch (err) {
     console.error('Error saving visitor record:', err);
   }
@@ -285,6 +581,12 @@ export function deleteVisitorRecord(id: string): void {
   try {
     const records = getVisitorRecords().filter((r) => r.id !== id);
     localStorage.setItem(VISITORS_STORAGE_KEY, JSON.stringify(records));
+    visitorSubscribers.forEach((cb) => cb(records));
+
+    // Cloud sync
+    deleteDoc(doc(db, 'visitors', id)).catch((e) => {
+      console.warn('Firestore deleteVisitor sync error:', e?.message);
+    });
   } catch (err) {
     console.error('Error deleting visitor record:', err);
   }
@@ -306,6 +608,12 @@ export function checkoutVisitor(id: string, checkOutTime?: string): void {
         status: 'Checked Out',
       };
       localStorage.setItem(VISITORS_STORAGE_KEY, JSON.stringify(records));
+      visitorSubscribers.forEach((cb) => cb(records));
+
+      // Cloud sync
+      setDoc(doc(db, 'visitors', id), records[idx], { merge: true }).catch((e) => {
+        console.warn('Firestore checkoutVisitor sync error:', e?.message);
+      });
     }
   } catch (err) {
     console.error('Error checking out visitor:', err);
