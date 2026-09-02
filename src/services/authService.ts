@@ -59,6 +59,7 @@ export const DNO_USER: UserProfile = {
   allowedTabs: [
     'dashboard',
     'visitors',
+    'tickets',
     'students',
     'settings',
     'profile',
@@ -83,6 +84,7 @@ export const DNO_USER: UserProfile = {
 export const AVAILABLE_TABS: { id: TabPermission; label: string; description: string }[] = [
   { id: 'dashboard', label: 'Dashboard', description: 'Core tools access & verification activity' },
   { id: 'visitors', label: 'Visitors Entry Register', description: 'Record visitor entry form, check-in/out & directory' },
+  { id: 'tickets', label: 'Counsellor Tickets', description: 'Grievance, inquiry & WhatsApp tickets created by counsellors' },
   { id: 'students', label: 'Students Directory', description: 'Candidate registration, records & scrutiny status' },
   { id: 'settings', label: 'Center Settings', description: 'Center identity, DNO details & preferences' },
   { id: 'profile', label: 'Operator Profile', description: 'Account details and session information' },
@@ -144,16 +146,36 @@ export function getAllUsers(): UserProfile[] {
       return initial;
     }
     const parsed: UserProfile[] = JSON.parse(raw);
-    // Ensure DNO always exists and has google_sheets tab
+    // Ensure DNO always exists and has google_sheets & tickets tab
     const dnoIndex = parsed.findIndex((u) => u.username.toLowerCase() === 'dno');
     if (dnoIndex === -1) {
       parsed.unshift(DNO_USER);
       localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(parsed));
     } else {
+      let modified = false;
       if (!parsed[dnoIndex].allowedTabs.includes('google_sheets')) {
         parsed[dnoIndex].allowedTabs.push('google_sheets');
+        modified = true;
+      }
+      if (!parsed[dnoIndex].allowedTabs.includes('tickets')) {
+        parsed[dnoIndex].allowedTabs.push('tickets');
+        modified = true;
+      }
+      if (modified) {
         localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(parsed));
       }
+    }
+
+    // Ensure all counsellor accounts automatically have the tickets tab in allowedTabs
+    let counsellorModified = false;
+    parsed.forEach((user) => {
+      if (user.role === 'counsellor' && !user.allowedTabs.includes('tickets')) {
+        user.allowedTabs.push('tickets');
+        counsellorModified = true;
+      }
+    });
+    if (counsellorModified) {
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(parsed));
     }
     return parsed;
   } catch (err) {

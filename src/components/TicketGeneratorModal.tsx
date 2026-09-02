@@ -18,7 +18,9 @@ import {
   Hash,
   Users,
 } from 'lucide-react';
-import { getStudentRecords } from '../services/authService';
+import { getStudentRecords, getCurrentUser } from '../services/authService';
+import { saveTicketRecord } from '../services/ticketService';
+import { UserProfile, TicketRecord } from '../types/auth';
 
 export interface TicketState {
   cetNo: string;
@@ -41,6 +43,7 @@ interface TicketGeneratorModalProps {
     email?: string;
     course?: string;
   };
+  currentUser?: UserProfile | null;
 }
 
 const COMMON_COURSES = [
@@ -63,6 +66,7 @@ export const TicketGeneratorModal: React.FC<TicketGeneratorModalProps> = ({
   isOpen,
   onClose,
   initialCandidate,
+  currentUser,
 }) => {
   // 8 Mandatory Ticket Fields
   const [ticketForm, setTicketForm] = useState<TicketState>({
@@ -83,6 +87,7 @@ export const TicketGeneratorModal: React.FC<TicketGeneratorModalProps> = ({
   });
   const [ticketCopied, setTicketCopied] = useState<boolean>(false);
   const [generatedTicketNo, setGeneratedTicketNo] = useState<string>('');
+  const [isSavedToDb, setIsSavedToDb] = useState<boolean>(false);
 
   // Quick Pick candidates from state
   const [availableStudents, setAvailableStudents] = useState<any[]>([]);
@@ -196,8 +201,34 @@ Course Name: ${course.trim()}
 Query: ${query.trim()}`;
 
     setTicketOutput(outputText);
+    setIsSavedToDb(true);
+
+    // Save ticket to Database (Firestore + LocalStorage)
+    const activeUser = currentUser || getCurrentUser();
+    const newRecord: TicketRecord = {
+      id: ticketNo,
+      ticketNo,
+      ticketType: 'candidate_ticket',
+      candidateName: candidateName.trim(),
+      cetNo: cetNo.trim().toUpperCase(),
+      capId: capId.trim().toUpperCase(),
+      dob: formattedDob,
+      mobile: mobile.trim(),
+      email: email.trim(),
+      course: course.trim(),
+      query: query.trim(),
+      formattedText: outputText,
+      status: 'Open',
+      createdBy: activeUser?.username || 'counsellor',
+      creatorName: activeUser?.fullName || activeUser?.username || 'Counsellor Officer',
+      creatorRole: activeUser?.role || 'counsellor',
+      createdAt: new Date().toISOString(),
+    };
+
+    saveTicketRecord(newRecord);
+
     setTicketStatus({
-      message: `Ticket info generated successfully.`,
+      message: `Ticket ${ticketNo} generated & saved to database successfully.`,
       type: 'ok',
     });
   };

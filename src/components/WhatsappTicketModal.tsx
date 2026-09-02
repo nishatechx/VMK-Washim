@@ -16,6 +16,9 @@ import {
   Phone,
   FileCheck,
 } from 'lucide-react';
+import { UserProfile, TicketRecord } from '../types/auth';
+import { getCurrentUser } from '../services/authService';
+import { saveTicketRecord } from '../services/ticketService';
 
 interface WhatsappFormData {
   name: string;
@@ -32,9 +35,10 @@ interface WhatsappFormData {
 interface WhatsappTicketModalProps {
   isOpen: boolean;
   onClose: () => void;
+  currentUser?: UserProfile | null;
 }
 
-export const WhatsappTicketModal: React.FC<WhatsappTicketModalProps> = ({ isOpen, onClose }) => {
+export const WhatsappTicketModal: React.FC<WhatsappTicketModalProps> = ({ isOpen, onClose, currentUser }) => {
   const [form, setForm] = useState<WhatsappFormData>({
     name: '',
     mobile: '',
@@ -139,8 +143,33 @@ export const WhatsappTicketModal: React.FC<WhatsappTicketModalProps> = ({ isOpen
 ${form.query.trim()}`;
 
     setOutput(whatsappFormatted);
+
+    // Save WhatsApp Ticket to Database (Firestore + LocalStorage)
+    const activeUser = currentUser || getCurrentUser();
+    const newRecord: TicketRecord = {
+      id: assignedTicket,
+      ticketNo: assignedTicket,
+      ticketType: 'whatsapp_ticket',
+      candidateName: form.name.trim(),
+      mobile: form.mobile.trim(),
+      email: form.email.trim(),
+      cetNo: form.cetRegNo.trim().toUpperCase(),
+      capId: form.capAppNo.trim().toUpperCase(),
+      course: form.courseName.trim(),
+      scrutinyMode: form.scrutinyMode,
+      query: form.query.trim(),
+      formattedText: whatsappFormatted,
+      status: 'Open',
+      createdBy: activeUser?.username || 'counsellor',
+      creatorName: activeUser?.fullName || activeUser?.username || 'Counsellor Officer',
+      creatorRole: activeUser?.role || 'counsellor',
+      createdAt: new Date().toISOString(),
+    };
+
+    saveTicketRecord(newRecord);
+
     setStatusMessage({
-      text: 'WhatsApp Ticket generated successfully! You can now copy or share it directly.',
+      text: `WhatsApp Ticket ${assignedTicket} generated & saved to Counsellor Tickets database!`,
       type: 'success',
     });
   };

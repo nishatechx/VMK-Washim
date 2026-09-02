@@ -9,6 +9,7 @@ import { SettingsView } from './components/views/SettingsView';
 import { ProfileView } from './components/views/ProfileView';
 import { UserManagementView } from './components/views/UserManagementView';
 import { GoogleSheetsView } from './components/views/GoogleSheetsView';
+import { TicketsView } from './components/views/TicketsView';
 
 import { TicketGeneratorModal } from './components/TicketGeneratorModal';
 import { WhatsappTicketModal } from './components/WhatsappTicketModal';
@@ -45,7 +46,7 @@ export default function App() {
     setIsAuthenticated(true);
     // If user's default active tab is not in allowed tabs, switch to first allowed
     if (!hasTabPermission(user, activeTab)) {
-      const firstAllowed = (['dashboard', 'visitors', 'students', 'google_sheets', 'settings', 'profile', 'user_management'] as NavTab[]).find(
+      const firstAllowed = (['dashboard', 'tickets', 'visitors', 'students', 'google_sheets', 'settings', 'profile', 'user_management'] as NavTab[]).find(
         (t) => hasTabPermission(user, t)
       );
       setActiveTab(firstAllowed || 'profile');
@@ -63,7 +64,7 @@ export default function App() {
     if (updated) {
       setCurUser(updated);
       if (!hasTabPermission(updated, activeTab)) {
-        const firstAllowed = (['dashboard', 'visitors', 'students', 'google_sheets', 'settings', 'profile', 'user_management'] as NavTab[]).find(
+        const firstAllowed = (['dashboard', 'tickets', 'visitors', 'students', 'google_sheets', 'settings', 'profile', 'user_management'] as NavTab[]).find(
           (t) => hasTabPermission(updated, t)
         );
         setActiveTab(firstAllowed || 'profile');
@@ -190,6 +191,14 @@ export default function App() {
                 />
               )}
 
+              {activeTab === 'tickets' && hasTabPermission(currentUser, 'tickets') && (
+                <TicketsView
+                  currentUser={currentUser}
+                  onOpenTicketTool={() => setIsTicketGeneratorOpen(true)}
+                  onOpenWhatsappTool={() => setIsWhatsappTicketOpen(true)}
+                />
+              )}
+
               {activeTab === 'google_sheets' && hasTabPermission(currentUser, 'google_sheets') && (
                 <GoogleSheetsView currentUser={currentUser} />
               )}
@@ -247,6 +256,7 @@ export default function App() {
       <WhatsappTicketModal
         isOpen={isWhatsappTicketOpen}
         onClose={() => setIsWhatsappTicketOpen(false)}
+        currentUser={currentUser}
       />
 
       <QrUploadModal
@@ -257,6 +267,7 @@ export default function App() {
       <TicketGeneratorModal
         isOpen={isTicketGeneratorOpen}
         onClose={() => setIsTicketGeneratorOpen(false)}
+        currentUser={currentUser}
       />
     </div>
   );

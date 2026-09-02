@@ -1,6 +1,7 @@
 export type TabPermission =
   | 'dashboard'
   | 'visitors'
+  | 'tickets'
   | 'students'
   | 'settings'
   | 'profile'
@@ -16,6 +17,33 @@ export type FeaturePermission =
   | 'export_reports';
 
 export type UserRole = 'dno' | 'counsellor' | 'supporting_staff' | 'operator';
+
+export type TicketStatus = 'Open' | 'In Progress' | 'Resolved' | 'Closed';
+export type TicketType = 'candidate_ticket' | 'whatsapp_ticket';
+
+export interface TicketRecord {
+  id: string; // Unique ticket record ID
+  ticketNo: string; // e.g. TC-FC1102-20260902-1234 or WA-CAP-2026-981240
+  ticketType: TicketType;
+  candidateName: string;
+  cetNo?: string;
+  capId?: string;
+  dob?: string;
+  mobile: string;
+  email?: string;
+  course: string;
+  scrutinyMode?: string;
+  query: string;
+  formattedText: string;
+  status: TicketStatus;
+  priority?: 'Normal' | 'Urgent' | 'High';
+  resolutionNotes?: string;
+  createdBy: string; // username of the counsellor/officer
+  creatorName: string; // full display name
+  creatorRole: string; // counsellor, supporting_staff, dno
+  createdAt: string; // ISO timestamp
+  updatedAt?: string;
+}
 
 export interface UserProfile {
   id: string;

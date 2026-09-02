@@ -213,7 +213,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
     setRole(selectedRole);
     if (selectedRole === 'counsellor') {
       setDesignation('Student Guidance Counsellor');
-      setAllowedTabs(['dashboard', 'visitors', 'students', 'profile']);
+      setAllowedTabs(['dashboard', 'tickets', 'visitors', 'students', 'profile']);
       setAllowedFeatures(['whatsapp_tool', 'ticket_generator_tool', 'add_candidate', 'add_visitor']);
     } else if (selectedRole === 'supporting_staff') {
       setDesignation('Supporting Staff');

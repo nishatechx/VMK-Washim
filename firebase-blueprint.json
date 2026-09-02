@@ -62,15 +62,27 @@
       }
     },
     "tickets": {
-      "title": "Admission & WhatsApp Tickets",
-      "description": "Generated tickets and inquiry tokens",
+      "title": "Counsellor & Admission Tickets",
+      "description": "Candidate grievance notes, inquiry tickets and WhatsApp notice dispatch records created by counsellors",
       "fields": {
-        "tokenNumber": { "type": "string", "description": "Token/Ticket number" },
+        "ticketNo": { "type": "string", "description": "Ticket unique reference number" },
+        "ticketType": { "type": "string", "description": "Type: candidate_ticket or whatsapp_ticket" },
         "candidateName": { "type": "string", "description": "Candidate name" },
-        "phone": { "type": "string", "description": "Phone number" },
-        "category": { "type": "string", "description": "Inquiry category" },
-        "createdAt": { "type": "string", "description": "Timestamp" },
-        "status": { "type": "string", "description": "Ticket status" }
+        "mobile": { "type": "string", "description": "Candidate mobile number" },
+        "email": { "type": "string", "description": "Candidate email address" },
+        "cetNo": { "type": "string", "description": "CET Application Registration Number" },
+        "capId": { "type": "string", "description": "CAP Application ID" },
+        "course": { "type": "string", "description": "Applied course name" },
+        "scrutinyMode": { "type": "string", "description": "Scrutiny mode (Physical / E-Scrutiny)" },
+        "query": { "type": "string", "description": "Candidate inquiry or grievance details" },
+        "formattedText": { "type": "string", "description": "Formatted ticket slip or WhatsApp text" },
+        "status": { "type": "string", "description": "Ticket status: Open, In Progress, Resolved, Closed" },
+        "resolutionNotes": { "type": "string", "description": "Officer resolution remarks" },
+        "createdBy": { "type": "string", "description": "Username of the creator counsellor/officer" },
+        "creatorName": { "type": "string", "description": "Full name of the creator" },
+        "creatorRole": { "type": "string", "description": "Role of the creator" },
+        "createdAt": { "type": "string", "description": "ISO creation timestamp" },
+        "updatedAt": { "type": "string", "description": "ISO updated timestamp" }
       }
     },
     "images": {

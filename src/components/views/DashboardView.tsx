@@ -18,6 +18,7 @@ import {
   Info,
   Building2,
   ExternalLink,
+  Ticket,
 } from 'lucide-react';
 import {
   getStudentRecords,
@@ -25,6 +26,7 @@ import {
   hasTabPermission,
   hasFeaturePermission,
 } from '../../services/authService';
+import { getTicketRecords } from '../../services/ticketService';
 import { UserProfile } from '../../types/auth';
 
 interface DashboardViewProps {
@@ -44,10 +46,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 }) => {
   const students = getStudentRecords();
   const visitors = getVisitorRecords();
+  const tickets = getTicketRecords();
 
   const verifiedCount = students.filter((s) => s.status === 'Verified').length;
   const objectionCount = students.filter((s) => s.status === 'Objection Raised').length;
   const inCenterVisitors = visitors.filter((v) => v.status === 'In Premises').length;
+  const openTicketsCount = tickets.filter((t) => t.status === 'Open' || t.status === 'In Progress').length;
 
   const quickStats = [
     {
@@ -72,10 +76,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       color: 'text-[#0056A6] bg-[#EAF4FB] border-[#D9E1EA]',
     },
     {
-      label: 'Total Candidates',
-      value: `${students.length}`,
-      change: 'Active database',
-      icon: Users,
+      label: 'Counsellor Tickets',
+      value: `${tickets.length}`,
+      change: openTicketsCount > 0 ? `${openTicketsCount} active/pending` : 'All resolved',
+      icon: Ticket,
       color: 'text-[#003B73] bg-[#EAF4FB] border-[#D9E1EA]',
     },
   ];
@@ -152,7 +156,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     });
   }
 
-  // 4. Visitors Entry Register (If visitor permission is given)
+  // 4. Counsellor Tickets Database Register (If tickets permission is given)
+  if (hasTabPermission(currentUser, 'tickets') || canTicket || canWhatsapp) {
+    authorizedCards.push({
+      id: 'counsellor_tickets_card',
+      title: 'Counsellor Tickets Database',
+      description: 'Manage candidate grievance tickets, inquiry notes & WhatsApp notices created by counsellors.',
+      icon: Ticket,
+      iconBg: 'bg-[#EAF4FB] text-[#003B73] border-[#D9E1EA]',
+      btnText: 'Open Tickets Tab',
+      btnColor: 'bg-[#003B73] hover:bg-[#002850] text-white',
+      badge: `${tickets.length} Tickets`,
+      badgeColor: 'bg-[#EAF4FB] text-[#003B73] border-[#D9E1EA]',
+      onClick: () => onNavigateTab('tickets'),
+    });
+  }
+
+  // 5. Visitors Entry Register (If visitor permission is given)
   if (hasTabPermission(currentUser, 'visitors') || canAddVisitor) {
     authorizedCards.push({
       id: 'visitors_register_card',

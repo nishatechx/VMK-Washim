@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   FileSpreadsheet,
   Lock,
+  Ticket,
 } from 'lucide-react';
 import { TabPermission, UserProfile } from '../types/auth';
 import { hasTabPermission } from '../services/authService';
@@ -45,6 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   }[] = [
     { id: 'dashboard' as NavTab, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'visitors' as NavTab, label: 'Visitors Entry', icon: UserCheck },
+    { id: 'tickets' as NavTab, label: 'Counsellor Tickets', icon: Ticket },
     { id: 'google_sheets' as NavTab, label: 'Google Sheets', icon: FileSpreadsheet, isProtected: true },
     { id: 'students' as NavTab, label: 'Students', icon: GraduationCap },
     { id: 'settings' as NavTab, label: 'Settings', icon: Settings },
