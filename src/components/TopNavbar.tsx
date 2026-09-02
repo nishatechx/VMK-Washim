@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Menu, Bell, User, ChevronDown, LogOut, Settings, UserCheck, ShieldCheck } from 'lucide-react';
+import { Menu, ChevronDown, LogOut, Settings, UserCheck, ShieldCheck, Building2, Phone, Clock, ExternalLink } from 'lucide-react';
 import { NavTab } from './Sidebar';
 import { UserProfile } from '../types/auth';
+import { hasTabPermission } from '../services/authService';
 
 interface TopNavbarProps {
   onToggleSidebar: () => void;
@@ -15,21 +16,23 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   onToggleSidebar,
   onNavigateTab,
   onLogout,
-  unreadCount = 0,
   currentUser,
 }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const profileRef = useRef<HTMLDivElement>(null);
-  const notifRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setIsProfileOpen(false);
-      }
-      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
-        setIsNotifOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -39,65 +42,64 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   const displayName = currentUser ? currentUser.fullName || currentUser.username : 'DNO Officer';
   const roleLabel = currentUser ? currentUser.designation || currentUser.role.toUpperCase() : 'District Nodal Officer';
 
+  const formattedDate = currentTime.toLocaleDateString('en-IN', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+
+  const formattedTime = currentTime.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+  });
+
   return (
     <header
       id="top-navbar"
-      className="w-full h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between z-30 select-none"
+      className="w-full bg-white border-b border-[#D9E1EA] px-3 sm:px-6 py-2.5 flex items-center justify-between z-30 select-none shadow-xs"
     >
-      {/* Left: Hamburger Menu Icon */}
+      {/* Left: Hamburger & Government Portal Identity */}
       <div className="flex items-center gap-3">
         <button
           id="mobile-menu-toggle"
           onClick={onToggleSidebar}
-          className="p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-200/60 active:scale-95 transition-all cursor-pointer"
-          title="Toggle Menu"
+          className="p-2 rounded-xl text-[#003B73] hover:text-[#0056A6] hover:bg-[#EAF4FB] active:scale-95 transition-all cursor-pointer border border-transparent hover:border-[#D9E1EA]"
+          title="Toggle Navigation Menu"
           aria-label="Toggle navigation menu"
         >
           <Menu className="w-5 h-5" />
         </button>
+
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-8 h-8 rounded-xl bg-[#003B73] flex items-center justify-center text-white font-bold text-xs shadow-xs border border-[#002850]">
+            <Building2 className="w-4 h-4 text-amber-300" />
+          </div>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <span className="text-xs sm:text-sm font-bold text-[#003B73] tracking-tight">
+                Scrutiny & Visitor Portal
+              </span>
+              <span className="hidden md:inline-flex text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Live
+              </span>
+            </div>
+            <span className="text-[10px] sm:text-[11px] text-[#6B7280] font-medium hidden sm:inline-block">
+              Candidate Verification & Visitor Desk
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Right: Notifications & User Profile */}
-      <div className="flex items-center gap-4 sm:gap-6">
-        {/* Notification Bell */}
-        <div className="relative" ref={notifRef}>
-          <button
-            id="navbar-notification-btn"
-            onClick={() => setIsNotifOpen(!isNotifOpen)}
-            className="relative p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 transition-colors cursor-pointer"
-            title="Notifications"
-            aria-label="View notifications"
-          >
-            <Bell className="w-5 h-5" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
-            )}
-          </button>
-
-          {isNotifOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-50 animate-in fade-in zoom-in-95">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100 px-2">
-                <span className="font-bold text-xs text-slate-800 uppercase tracking-wider">
-                  Notifications
-                </span>
-                <button
-                  onClick={() => {
-                    setIsNotifOpen(false);
-                    onNavigateTab('notifications');
-                  }}
-                  className="text-xs text-blue-600 hover:underline cursor-pointer"
-                >
-                  View all
-                </button>
-              </div>
-              <div className="divide-y divide-slate-100 max-h-60 overflow-y-auto">
-                <div className="py-2.5 px-2 hover:bg-slate-50 rounded-lg text-xs">
-                  <p className="font-semibold text-slate-800">State CET Cell Verification Portal Active</p>
-                  <p className="text-slate-500 text-[11px] mt-0.5">Welcome to VMK Washim Scrutiny System</p>
-                </div>
-              </div>
-            </div>
-          )}
+      {/* Right: Live Digital Clock, Helpline & User Profile */}
+      <div className="flex items-center gap-3 sm:gap-4">
+        {/* Live Clock Strip */}
+        <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#F7F9FC] border border-[#D9E1EA] text-xs text-[#003B73]">
+          <Clock className="w-3.5 h-3.5 text-[#0056A6]" />
+          <span className="font-medium text-[#4B5563]">{formattedDate}</span>
+          <span className="font-mono font-bold text-[#003B73]">{formattedTime}</span>
         </div>
 
         {/* User Profile Pill */}
@@ -105,90 +107,90 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           <button
             id="navbar-profile-btn"
             onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="flex items-center gap-2.5 p-1 sm:pr-2.5 rounded-full sm:rounded-xl hover:bg-slate-200/50 transition-all cursor-pointer group text-left"
+            className="flex items-center gap-2.5 p-1 sm:pr-3 rounded-full sm:rounded-xl hover:bg-[#EAF4FB] border border-transparent hover:border-[#D9E1EA] transition-all cursor-pointer group text-left"
             aria-label="User account menu"
           >
             {currentUser?.profilePicture ? (
               <img
                 src={currentUser.profilePicture}
                 alt={displayName}
-                className="w-8 h-8 rounded-full object-cover border border-blue-400 shadow-xs"
+                className="w-8 h-8 rounded-full object-cover border-2 border-[#0056A6] shadow-xs"
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-blue-600 border border-blue-700 flex items-center justify-center text-white font-bold text-xs group-hover:bg-blue-700 transition-colors">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0056A6] to-[#003B73] text-white flex items-center justify-center font-bold text-xs shadow-xs">
                 {displayName.charAt(0).toUpperCase()}
               </div>
             )}
 
             <div className="hidden sm:flex flex-col text-left leading-tight">
-              <span className="text-[11px] text-slate-500">Signed in as</span>
-              <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
+              <span className="text-[10px] text-[#6B7280] uppercase tracking-wider font-semibold">Authorized User</span>
+              <span className="text-xs font-bold text-[#1F2937] flex items-center gap-1">
                 {displayName}
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-transform" />
+                <ChevronDown className="w-3.5 h-3.5 text-[#6B7280] group-hover:text-[#0056A6] transition-transform" />
               </span>
             </div>
           </button>
 
           {isProfileOpen && (
-            <div className="absolute right-0 mt-2 w-60 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-50">
-              <div className="px-3 py-2 border-b border-slate-100">
-                <p className="text-xs font-bold text-slate-900">{displayName}</p>
-                <p className="text-[11px] text-slate-500 truncate">{roleLabel}</p>
-                <p className="text-[10px] font-mono text-blue-600 mt-0.5">
+            <div className="absolute right-0 mt-2 w-64 bg-white border border-[#D9E1EA] rounded-2xl shadow-xl p-2 z-50">
+              <div className="px-3 py-2.5 border-b border-[#D9E1EA]">
+                <p className="text-xs font-bold text-[#1F2937]">{displayName}</p>
+                <p className="text-[11px] text-[#6B7280] truncate">{roleLabel}</p>
+                <p className="text-[10px] font-mono text-[#0056A6] mt-0.5">
                   User ID: {currentUser?.username || 'dno'}
                 </p>
               </div>
 
               <div className="py-1">
-                {currentUser?.allowedTabs.includes('profile') && (
+                {hasTabPermission(currentUser, 'profile') && (
                   <button
                     onClick={() => {
                       setIsProfileOpen(false);
                       onNavigateTab('profile');
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 rounded-lg cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[#4B5563] hover:bg-[#EAF4FB] hover:text-[#003B73] rounded-xl cursor-pointer transition-colors"
                   >
-                    <UserCheck className="w-4 h-4 text-slate-500" />
-                    <span>My Profile</span>
+                    <UserCheck className="w-4 h-4 text-[#0056A6]" />
+                    <span>My Profile & Security</span>
                   </button>
                 )}
 
-                {currentUser?.allowedTabs.includes('user_management') && (
+                {hasTabPermission(currentUser, 'user_management') && (
                   <button
                     onClick={() => {
                       setIsProfileOpen(false);
                       onNavigateTab('user_management');
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-blue-700 font-medium hover:bg-blue-50 rounded-lg cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[#003B73] font-semibold hover:bg-[#EAF4FB] rounded-xl cursor-pointer transition-colors"
                   >
-                    <ShieldCheck className="w-4 h-4 text-blue-600" />
+                    <ShieldCheck className="w-4 h-4 text-[#0056A6]" />
                     <span>User Management (DNO)</span>
                   </button>
                 )}
 
-                {currentUser?.allowedTabs.includes('settings') && (
+                {hasTabPermission(currentUser, 'settings') && (
                   <button
                     onClick={() => {
                       setIsProfileOpen(false);
                       onNavigateTab('settings');
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 rounded-lg cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[#4B5563] hover:bg-[#EAF4FB] hover:text-[#003B73] rounded-xl cursor-pointer transition-colors"
                   >
-                    <Settings className="w-4 h-4 text-slate-500" />
+                    <Settings className="w-4 h-4 text-[#4B5563]" />
                     <span>Center Settings</span>
                   </button>
                 )}
               </div>
 
-              <div className="pt-1 border-t border-slate-100">
+              <div className="pt-1 border-t border-[#D9E1EA]">
                 <button
                   onClick={() => {
                     setIsProfileOpen(false);
                     onLogout();
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-red-600 hover:bg-red-50 rounded-lg cursor-pointer font-medium"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 rounded-xl cursor-pointer font-bold transition-colors"
                 >
-                  <LogOut className="w-4 h-4 text-red-500" />
+                  <LogOut className="w-4 h-4 text-rose-600" />
                   <span>Sign Out</span>
                 </button>
               </div>

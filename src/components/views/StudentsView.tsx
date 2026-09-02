@@ -23,6 +23,7 @@ import {
   subscribeToStudents,
   saveStudentRecord,
   deleteStudentRecord,
+  hasFeaturePermission,
 } from '../../services/authService';
 
 interface StudentsViewProps {
@@ -81,7 +82,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
       mode: newMode,
       status: newStatus,
       date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-      remarks: newRemarks.trim() || 'Candidate profile registered at VMK Washim',
+      remarks: newRemarks.trim() || 'Candidate profile registered in scrutiny desk',
       createdAt: new Date().toISOString(),
     };
 
@@ -116,10 +117,10 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
     return matchesSearch && matchesCourse && matchesStatus;
   });
 
-  const canAdd = currentUser?.allowedFeatures ? currentUser.allowedFeatures.includes('add_candidate') : true;
-  const canWhatsapp = currentUser?.allowedFeatures ? currentUser.allowedFeatures.includes('whatsapp_tool') : true;
-  const canTicket = currentUser?.allowedFeatures ? currentUser.allowedFeatures.includes('ticket_generator_tool') : true;
-  const canQr = currentUser?.allowedFeatures ? currentUser.allowedFeatures.includes('qr_upload_tool') : true;
+  const canAdd = hasFeaturePermission(currentUser, 'add_candidate');
+  const canWhatsapp = hasFeaturePermission(currentUser, 'whatsapp_tool');
+  const canTicket = hasFeaturePermission(currentUser, 'ticket_generator_tool');
+  const canQr = hasFeaturePermission(currentUser, 'qr_upload_tool');
 
   return (
     <div className="relative z-10 w-full space-y-5">
@@ -291,7 +292,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                         {canTicket && (
                           <button
                             onClick={onOpenTicketTool}
-                            title="Generate Discrepancy Ticket"
+                            title="Generate Candidate Ticket"
                             className="p-1.5 rounded-lg text-blue-700 hover:bg-blue-50 border border-blue-200 cursor-pointer"
                           >
                             <FileText className="w-4 h-4" />

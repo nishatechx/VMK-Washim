@@ -147,7 +147,7 @@ export const MobileQrUploadView: React.FC<MobileQrUploadViewProps> = ({ sessionI
             </div>
             <div>
               <h1 className="text-sm font-bold text-white leading-tight">
-                VMK Washim — Document Scanner
+                Document Scanner Desk
               </h1>
               <p className="text-[10px] text-blue-200 font-mono">
                 SESSION: <span className="font-bold text-amber-300">#{sessionId}</span>
@@ -379,7 +379,7 @@ export const MobileQrUploadView: React.FC<MobileQrUploadViewProps> = ({ sessionI
 
       {/* Footer */}
       <footer className="py-3 text-center text-[11px] text-blue-300/60 border-t border-blue-500/10">
-        VMK Washim • Direct In-Software E-Scrutiny File Transmission
+        Direct In-Software E-Scrutiny File Transmission
       </footer>
     </div>
   );

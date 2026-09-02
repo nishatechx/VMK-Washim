@@ -5,9 +5,6 @@ import { DashboardBackgroundSvg } from './components/DashboardBackgroundSvg';
 import { DashboardView } from './components/views/DashboardView';
 import { VisitorsView } from './components/views/VisitorsView';
 import { StudentsView } from './components/views/StudentsView';
-import { CounsellingView } from './components/views/CounsellingView';
-import { ReportsView } from './components/views/ReportsView';
-import { NotificationsView } from './components/views/NotificationsView';
 import { SettingsView } from './components/views/SettingsView';
 import { ProfileView } from './components/views/ProfileView';
 import { UserManagementView } from './components/views/UserManagementView';
@@ -18,8 +15,15 @@ import { WhatsappTicketModal } from './components/WhatsappTicketModal';
 import { QrUploadModal } from './components/QrUploadModal';
 import { MobileQrUploadView } from './components/MobileQrUploadView';
 import { LoginScreen } from './components/LoginScreen';
-import { getCurrentUser, setCurrentUser, DNO_USER } from './services/authService';
+import {
+  getCurrentUser,
+  setCurrentUser,
+  DNO_USER,
+  hasTabPermission,
+  hasFeaturePermission,
+} from './services/authService';
 import { UserProfile } from './types/auth';
+import { Building2, ShieldCheck, ExternalLink, Phone, Mail, MapPin } from 'lucide-react';
 
 export default function App() {
   const [currentUser, setCurUser] = useState<UserProfile | null>(() => getCurrentUser());
@@ -40,8 +44,11 @@ export default function App() {
     setCurUser(user);
     setIsAuthenticated(true);
     // If user's default active tab is not in allowed tabs, switch to first allowed
-    if (!user.allowedTabs.includes(activeTab)) {
-      setActiveTab(user.allowedTabs[0] || 'dashboard');
+    if (!hasTabPermission(user, activeTab)) {
+      const firstAllowed = (['dashboard', 'visitors', 'students', 'google_sheets', 'settings', 'profile', 'user_management'] as NavTab[]).find(
+        (t) => hasTabPermission(user, t)
+      );
+      setActiveTab(firstAllowed || 'profile');
     }
   };
 
@@ -55,8 +62,11 @@ export default function App() {
     const updated = getCurrentUser();
     if (updated) {
       setCurUser(updated);
-      if (!updated.allowedTabs.includes(activeTab)) {
-        setActiveTab(updated.allowedTabs[0] || 'dashboard');
+      if (!hasTabPermission(updated, activeTab)) {
+        const firstAllowed = (['dashboard', 'visitors', 'students', 'google_sheets', 'settings', 'profile', 'user_management'] as NavTab[]).find(
+          (t) => hasTabPermission(updated, t)
+        );
+        setActiveTab(firstAllowed || 'profile');
       }
     }
   };
@@ -91,12 +101,10 @@ export default function App() {
     return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
   }
 
-  const isDnoAdmin = currentUser?.role === 'dno' || currentUser?.username?.toLowerCase() === 'dno';
-
   return (
     <div
       id="vmk-washim-app-root"
-      className="flex h-screen w-full bg-[#f4f7fb] text-slate-900 font-sans select-none overflow-hidden"
+      className="flex h-screen w-full bg-[#F7F9FC] text-[#4B5563] font-sans select-none overflow-hidden"
     >
       {/* Left Sidebar (Desktop & Mobile drawer) */}
       <div
@@ -119,10 +127,10 @@ export default function App() {
       {isMobileSidebarOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden">
           <div
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs"
+            className="fixed inset-0 bg-[#003B73]/60 backdrop-blur-xs"
             onClick={() => setIsMobileSidebarOpen(false)}
           />
-          <div className="relative w-72 h-full bg-[#f4f7fb] z-10 shadow-2xl">
+          <div className="relative w-72 h-full bg-[#F7F9FC] z-10 shadow-2xl">
             <Sidebar
               activeTab={activeTab}
               onSelectTab={(tab) => {
@@ -158,14 +166,14 @@ export default function App() {
         <main className="flex-1 px-3 sm:px-6 pb-4 sm:pb-6 min-h-0 overflow-hidden">
           <div
             id="main-stage-container"
-            className="relative w-full h-full bg-white rounded-2xl md:rounded-3xl border border-slate-200/90 shadow-sm overflow-y-auto p-4 sm:p-6 lg:p-8"
+            className="relative w-full h-full bg-[#FFFFFF] rounded-2xl md:rounded-3xl border border-[#D9E1EA] shadow-sm overflow-y-auto p-4 sm:p-6 lg:p-8 flex flex-col justify-between"
           >
             {/* Vector Wavy Background + Top Right Dots matching screenshot */}
             <DashboardBackgroundSvg />
 
             {/* Interactive View Content */}
-            <div className="relative z-10 w-full max-w-6xl mx-auto">
-              {activeTab === 'dashboard' && currentUser.allowedTabs.includes('dashboard') && (
+            <div className="relative z-10 w-full max-w-6xl mx-auto flex-1">
+              {activeTab === 'dashboard' && hasTabPermission(currentUser, 'dashboard') && (
                 <DashboardView
                   onOpenWhatsappTool={() => setIsWhatsappTicketOpen(true)}
                   onOpenQrTool={() => setIsQrUploadModalOpen(true)}
@@ -175,18 +183,18 @@ export default function App() {
                 />
               )}
 
-              {activeTab === 'visitors' && currentUser.allowedTabs.includes('visitors') && (
+              {activeTab === 'visitors' && hasTabPermission(currentUser, 'visitors') && (
                 <VisitorsView
                   currentUser={currentUser}
                   onNavigateTab={(tab) => setActiveTab(tab as NavTab)}
                 />
               )}
 
-              {activeTab === 'google_sheets' && isDnoAdmin && currentUser.allowedTabs.includes('google_sheets') && (
+              {activeTab === 'google_sheets' && hasTabPermission(currentUser, 'google_sheets') && (
                 <GoogleSheetsView currentUser={currentUser} />
               )}
 
-              {activeTab === 'students' && currentUser.allowedTabs.includes('students') && (
+              {activeTab === 'students' && hasTabPermission(currentUser, 'students') && (
                 <StudentsView
                   onOpenWhatsappTool={() => setIsWhatsappTicketOpen(true)}
                   onOpenTicketTool={() => setIsTicketGeneratorOpen(true)}
@@ -195,26 +203,14 @@ export default function App() {
                 />
               )}
 
-              {activeTab === 'counselling' && currentUser.allowedTabs.includes('counselling') && (
-                <CounsellingView />
-              )}
-
-              {activeTab === 'reports' && currentUser.allowedTabs.includes('reports') && (
-                <ReportsView />
-              )}
-
-              {activeTab === 'notifications' && currentUser.allowedTabs.includes('notifications') && (
-                <NotificationsView />
-              )}
-
-              {activeTab === 'settings' && currentUser.allowedTabs.includes('settings') && (
+              {activeTab === 'settings' && hasTabPermission(currentUser, 'settings') && (
                 <SettingsView
                   currentUser={currentUser}
                   onNavigateToUsers={() => setActiveTab('user_management')}
                 />
               )}
 
-              {activeTab === 'profile' && currentUser.allowedTabs.includes('profile') && (
+              {activeTab === 'profile' && hasTabPermission(currentUser, 'profile') && (
                 <ProfileView
                   onLogout={handleLogout}
                   currentUser={currentUser}
@@ -222,13 +218,27 @@ export default function App() {
                 />
               )}
 
-              {activeTab === 'user_management' && currentUser.allowedTabs.includes('user_management') && (
+              {activeTab === 'user_management' && hasTabPermission(currentUser, 'user_management') && (
                 <UserManagementView
                   currentUser={currentUser}
                   onRefreshSession={handleRefreshSession}
                 />
               )}
             </div>
+
+            {/* Application Footer */}
+            <footer className="relative z-10 w-full max-w-6xl mx-auto mt-8 pt-6 border-t border-[#D9E1EA] text-xs text-[#6B7280]">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-2 text-[11px] text-[#4B5563]">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>Secure Verification & Visitor Management Portal</span>
+                </div>
+
+                <div className="flex items-center gap-2 text-[11px] text-[#6B7280]">
+                  <span>Candidate Scrutiny System</span>
+                </div>
+              </div>
+            </footer>
           </div>
         </main>
       </div>

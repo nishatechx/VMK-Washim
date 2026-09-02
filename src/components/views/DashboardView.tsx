@@ -11,16 +11,20 @@ import {
   UserCheck,
   FileSpreadsheet,
   GraduationCap,
-  BarChart3,
-  Bell,
   Settings,
   UserCircle,
   Lock,
   Sparkles,
+  Info,
+  Building2,
   ExternalLink,
-  ChevronRight,
 } from 'lucide-react';
-import { getStudentRecords, getVisitorRecords } from '../../services/authService';
+import {
+  getStudentRecords,
+  getVisitorRecords,
+  hasTabPermission,
+  hasFeaturePermission,
+} from '../../services/authService';
 import { UserProfile } from '../../types/auth';
 
 interface DashboardViewProps {
@@ -51,252 +55,224 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       value: `${verifiedCount}`,
       change: students.length > 0 ? `${Math.round((verifiedCount / students.length) * 100)}% verified` : '0 today',
       icon: CheckCircle2,
-      color: 'text-emerald-600 bg-emerald-50 border-emerald-200',
+      color: 'text-[#198754] bg-[#198754]/10 border-[#198754]/25',
     },
     {
-      label: 'Pending Objections',
+      label: 'Pending Verification',
       value: `${objectionCount}`,
       change: objectionCount > 0 ? 'Action required' : 'Clear',
       icon: AlertTriangle,
-      color: 'text-amber-600 bg-amber-50 border-amber-200',
+      color: 'text-[#DC3545] bg-[#DC3545]/10 border-[#DC3545]/25',
     },
     {
       label: 'Visitors Today',
       value: `${visitors.length}`,
       change: inCenterVisitors > 0 ? `${inCenterVisitors} in center` : 'All checked out',
       icon: UserCheck,
-      color: 'text-indigo-600 bg-indigo-50 border-indigo-200',
+      color: 'text-[#0056A6] bg-[#EAF4FB] border-[#D9E1EA]',
     },
     {
       label: 'Total Candidates',
       value: `${students.length}`,
       change: 'Active database',
       icon: Users,
-      color: 'text-blue-600 bg-blue-50 border-blue-200',
+      color: 'text-[#003B73] bg-[#EAF4FB] border-[#D9E1EA]',
     },
   ];
 
   const recentStudents = students.slice(0, 5);
 
-  const canWhatsapp = currentUser?.allowedFeatures ? currentUser.allowedFeatures.includes('whatsapp_tool') : true;
-  const canQr = currentUser?.allowedFeatures ? currentUser.allowedFeatures.includes('qr_upload_tool') : true;
-  const canTicket = currentUser?.allowedFeatures ? currentUser.allowedFeatures.includes('ticket_generator_tool') : true;
+  const canWhatsapp = hasFeaturePermission(currentUser, 'whatsapp_tool');
+  const canQr = hasFeaturePermission(currentUser, 'qr_upload_tool');
+  const canTicket = hasFeaturePermission(currentUser, 'ticket_generator_tool');
+  const canAddCandidate = hasFeaturePermission(currentUser, 'add_candidate');
+  const canAddVisitor = hasFeaturePermission(currentUser, 'add_visitor');
   const isDnoAdmin = currentUser?.role === 'dno' || currentUser?.username?.toLowerCase() === 'dno';
 
-  // Feature cards configured for direct redirection - Google Sheets restricted to DNO Admin
-  const allFeatures = [
-    {
-      id: 'visitors_feature',
-      title: 'Visitors Entry Register',
-      description: 'Record guest entry form, generate auto Sr No, log timestamps & manage check-in/out.',
-      icon: UserCheck,
-      iconBg: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-      btnText: 'Open Visitors Tab',
-      btnColor: 'bg-indigo-600 hover:bg-indigo-700 text-white',
-      badge: 'Active Register',
-      badgeColor: 'bg-indigo-50 text-indigo-800 border-indigo-200',
-      onClick: () => onNavigateTab('visitors'),
-    },
-    ...(isDnoAdmin
-      ? [
-          {
-            id: 'sheets_feature',
-            title: 'Google Sheets Cloud Sync',
-            description: 'Real-time two-way synchronization to Google Drive spreadsheets & CSV export.',
-            icon: FileSpreadsheet,
-            iconBg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-            btnText: 'Access Google Sheets',
-            btnColor: 'bg-emerald-600 hover:bg-emerald-700 text-white',
-            badge: 'Pass: dno1',
-            badgeColor: 'bg-amber-100 text-amber-900 border-amber-300 font-mono',
-            isProtected: true,
-            onClick: () => onNavigateTab('google_sheets'),
-          },
-        ]
-      : []),
-    {
-      id: 'students_feature',
-      title: 'Students & Scrutiny Directory',
-      description: 'Candidate CET application records, document verification statuses & objection tracking.',
-      icon: GraduationCap,
-      iconBg: 'bg-blue-50 text-blue-700 border-blue-200',
-      btnText: 'Open Students Tab',
-      btnColor: 'bg-blue-600 hover:bg-blue-700 text-white',
-      badge: `${students.length} Registered`,
-      badgeColor: 'bg-blue-50 text-blue-800 border-blue-200',
-      onClick: () => onNavigateTab('students'),
-    },
-    {
-      id: 'whatsapp_feature',
+  // Core Dashboard Cards - STRICTLY shown only if tool/feature access is explicitly given to current user
+  const authorizedCards: Array<{
+    id: string;
+    title: string;
+    description: string;
+    icon: any;
+    iconBg: string;
+    btnText: string;
+    btnColor: string;
+    badge?: string;
+    badgeColor?: string;
+    isProtected?: boolean;
+    onClick: () => void;
+  }> = [];
+
+  // 1. WhatsApp Ticket Tool
+  if (canWhatsapp) {
+    authorizedCards.push({
+      id: 'whatsapp_tool_card',
       title: 'WhatsApp Notice Dispatcher',
-      description: 'Instant WhatsApp message generator for candidate objection slips & status alerts.',
+      description: 'Generate and send instant WhatsApp verification notices, document discrepancy alerts, and candidate slips.',
       icon: MessageCircle,
-      iconBg: 'bg-emerald-50 text-emerald-600 border-emerald-200',
-      btnText: 'Launch WhatsApp Tool',
-      btnColor: 'bg-emerald-600 hover:bg-emerald-700 text-white',
-      badge: 'Instant Tool',
-      badgeColor: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-      disabled: !canWhatsapp,
+      iconBg: 'bg-[#198754]/10 text-[#198754] border-[#198754]/30',
+      btnText: 'Open WhatsApp Tool',
+      btnColor: 'bg-[#198754] hover:bg-[#146c43] text-white',
+      badge: 'Active Tool',
+      badgeColor: 'bg-[#198754]/10 text-[#198754] border-[#198754]/30',
       onClick: onOpenWhatsappTool,
-    },
-    {
-      id: 'qr_feature',
-      title: 'Upload by Mobile QR',
-      description: 'Camera QR sync for instant mobile document photo upload to physical scrutiny desk.',
+    });
+  }
+
+  // 2. Upload by Mobile QR Scanner Tool
+  if (canQr) {
+    authorizedCards.push({
+      id: 'qr_tool_card',
+      title: 'Upload by Mobile QR Code',
+      description: 'Camera QR sync for instant mobile document photo upload directly into the physical scrutiny desk.',
       icon: QrCode,
-      iconBg: 'bg-amber-50 text-amber-700 border-amber-200',
-      btnText: 'Launch QR Scanner Tool',
-      btnColor: 'bg-amber-600 hover:bg-amber-700 text-white',
-      badge: 'Instant Tool',
-      badgeColor: 'bg-amber-50 text-amber-800 border-amber-200',
-      disabled: !canQr,
+      iconBg: 'bg-[#F59E0B]/10 text-[#F59E0B] border-[#F59E0B]/30',
+      btnText: 'Open QR Scanner Tool',
+      btnColor: 'bg-[#F59E0B] hover:bg-[#D97706] text-white',
+      badge: 'Active Tool',
+      badgeColor: 'bg-[#F59E0B]/10 text-[#B45309] border-[#F59E0B]/30',
       onClick: onOpenQrTool,
-    },
-    {
-      id: 'ticket_feature',
-      title: 'Objection Memo & Ticket Generator',
-      description: 'Generate formatted discrepancy slips, objection memos, and candidate query notes.',
+    });
+  }
+
+  // 3. Candidate Grievance / Query Ticket Desk Tool
+  if (canTicket) {
+    authorizedCards.push({
+      id: 'ticket_tool_card',
+      title: 'Candidate Grievance Ticket Desk',
+      description: 'Generate formatted grievance tickets and official candidate query notes with the 8 mandatory CET/CAP fields.',
       icon: FileText,
-      iconBg: 'bg-blue-50 text-blue-700 border-blue-200',
-      btnText: 'Launch Generator Tool',
-      btnColor: 'bg-blue-600 hover:bg-blue-700 text-white',
-      badge: 'Printable Slip',
-      badgeColor: 'bg-blue-50 text-blue-800 border-blue-200',
-      disabled: !canTicket,
+      iconBg: 'bg-[#EAF4FB] text-[#006BB6] border-[#D9E1EA]',
+      btnText: 'Open Ticket Desk Tool',
+      btnColor: 'bg-[#006BB6] hover:bg-[#0056A6] text-white',
+      badge: 'Active Tool',
+      badgeColor: 'bg-[#EAF4FB] text-[#006BB6] border-[#D9E1EA]',
       onClick: onOpenTicketTool,
-    },
-    {
-      id: 'counselling_feature',
-      title: 'Counselling & CAP Desk',
-      description: 'Admission guidance rules, caste validity requirements, cutoff stats & seat matrices.',
-      icon: Users,
-      iconBg: 'bg-teal-50 text-teal-700 border-teal-200',
-      btnText: 'Open Counselling Tab',
-      btnColor: 'bg-teal-600 hover:bg-teal-700 text-white',
-      badge: 'Guidance Desk',
-      badgeColor: 'bg-teal-50 text-teal-800 border-teal-200',
-      onClick: () => onNavigateTab('counselling'),
-    },
-    {
-      id: 'reports_feature',
-      title: 'Reports & Data Analytics',
-      description: 'Daily visitor footfall charts, document discrepancy tallies & audit CSV exports.',
-      icon: BarChart3,
-      iconBg: 'bg-purple-50 text-purple-700 border-purple-200',
-      btnText: 'Open Reports Tab',
-      btnColor: 'bg-purple-600 hover:bg-purple-700 text-white',
-      badge: 'Audit & Stats',
-      badgeColor: 'bg-purple-50 text-purple-800 border-purple-200',
-      onClick: () => onNavigateTab('reports'),
-    },
-    {
-      id: 'notifications_feature',
-      title: 'Circulars & Notice Board',
-      description: 'Post and view DTE Maharashtra circulars, center alerts, and critical date notices.',
-      icon: Bell,
-      iconBg: 'bg-rose-50 text-rose-700 border-rose-200',
-      btnText: 'Open Notices Tab',
-      btnColor: 'bg-rose-600 hover:bg-rose-700 text-white',
-      badge: 'Broadcast Alerts',
-      badgeColor: 'bg-rose-50 text-rose-800 border-rose-200',
-      onClick: () => onNavigateTab('notifications'),
-    },
-    {
-      id: 'user_mgmt_feature',
+    });
+  }
+
+  // 4. Visitors Entry Register (If visitor permission is given)
+  if (hasTabPermission(currentUser, 'visitors') || canAddVisitor) {
+    authorizedCards.push({
+      id: 'visitors_register_card',
+      title: 'Visitors Entry Register',
+      description: 'Record visitor entry form, generate auto Sr No, log timestamps & manage check-in/out records.',
+      icon: UserCheck,
+      iconBg: 'bg-[#EAF4FB] text-[#0056A6] border-[#D9E1EA]',
+      btnText: 'Open Visitors Tab',
+      btnColor: 'bg-[#0056A6] hover:bg-[#003B73] text-white',
+      badge: `${visitors.length} Visitors`,
+      badgeColor: 'bg-[#EAF4FB] text-[#0056A6] border-[#D9E1EA]',
+      onClick: () => onNavigateTab('visitors'),
+    });
+  }
+
+  // 5. Students & Scrutiny Directory (If candidate access is given)
+  if (hasTabPermission(currentUser, 'students') || canAddCandidate) {
+    authorizedCards.push({
+      id: 'students_directory_card',
+      title: 'Students & Scrutiny Directory',
+      description: 'Candidate CET application records, document verification statuses & scrutiny logs.',
+      icon: GraduationCap,
+      iconBg: 'bg-[#EAF4FB] text-[#0056A6] border-[#D9E1EA]',
+      btnText: 'Open Students Tab',
+      btnColor: 'bg-[#0056A6] hover:bg-[#003B73] text-white',
+      badge: `${students.length} Registered`,
+      badgeColor: 'bg-[#EAF4FB] text-[#0056A6] border-[#D9E1EA]',
+      onClick: () => onNavigateTab('students'),
+    });
+  }
+
+  // 6. Google Sheets Cloud Sync (DNO Admin Only)
+  if (hasTabPermission(currentUser, 'google_sheets') && isDnoAdmin) {
+    authorizedCards.push({
+      id: 'sheets_sync_card',
+      title: 'Google Sheets Cloud Sync',
+      description: 'Real-time two-way synchronization to Google Drive spreadsheets & CSV export.',
+      icon: FileSpreadsheet,
+      iconBg: 'bg-[#198754]/10 text-[#198754] border-[#198754]/30',
+      btnText: 'Access Google Sheets',
+      btnColor: 'bg-[#198754] hover:bg-[#146c43] text-white',
+      badge: 'DNO Protected',
+      badgeColor: 'bg-[#F59E0B]/15 text-[#B45309] border-[#F59E0B]/30 font-mono',
+      isProtected: true,
+      onClick: () => onNavigateTab('google_sheets'),
+    });
+  }
+
+  // 7. Staff & User Management (DNO Admin Only)
+  if (hasTabPermission(currentUser, 'user_management') && isDnoAdmin) {
+    authorizedCards.push({
+      id: 'user_mgmt_card',
       title: 'Staff & User Management',
-      description: 'Create & manage scrutiny operator profiles, role assignments, and tab rule permissions.',
+      description: 'Create & manage staff profiles, role assignments, and tab rule permissions.',
       icon: ShieldCheck,
-      iconBg: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      iconBg: 'bg-[#EAF4FB] text-[#003B73] border-[#D9E1EA]',
       btnText: 'Open User Management',
-      btnColor: 'bg-indigo-600 hover:bg-indigo-700 text-white',
-      badge: 'DNO Access',
-      badgeColor: 'bg-indigo-50 text-indigo-800 border-indigo-200',
+      btnColor: 'bg-[#003B73] hover:bg-[#002850] text-white',
+      badge: 'Admin Access',
+      badgeColor: 'bg-[#EAF4FB] text-[#003B73] border-[#D9E1EA]',
       onClick: () => onNavigateTab('user_management'),
-    },
-    {
-      id: 'settings_feature',
-      title: 'Center Configuration & Settings',
-      description: 'Facilitation Center identity, DNO officer details, college info & system backup.',
-      icon: Settings,
-      iconBg: 'bg-slate-100 text-slate-700 border-slate-300',
-      btnText: 'Open Settings Tab',
-      btnColor: 'bg-slate-800 hover:bg-slate-900 text-white',
-      badge: 'Center Setup',
-      badgeColor: 'bg-slate-100 text-slate-800 border-slate-300',
-      onClick: () => onNavigateTab('settings'),
-    },
-    {
-      id: 'profile_feature',
-      title: 'Operator Profile & Security',
-      description: 'View active session details, update user profile info, and change login credentials.',
-      icon: UserCircle,
-      iconBg: 'bg-cyan-50 text-cyan-700 border-cyan-200',
-      btnText: 'Open Profile Tab',
-      btnColor: 'bg-cyan-700 hover:bg-cyan-800 text-white',
-      badge: 'Current Session',
-      badgeColor: 'bg-cyan-50 text-cyan-800 border-cyan-200',
-      onClick: () => onNavigateTab('profile'),
-    },
-  ];
+    });
+  }
 
   return (
-    <div className="relative z-10 w-full space-y-6">
-      {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-7 text-white shadow-md relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-96 h-full bg-radial from-blue-500/20 via-transparent to-transparent pointer-events-none" />
+    <div className="relative z-10 w-full space-y-6 pb-6">
+      {/* Portal Masthead Card */}
+      <div className="bg-gradient-to-r from-[#003B73] via-[#0056A6] to-[#006BB6] rounded-2xl md:rounded-3xl p-5 sm:p-7 text-white shadow-md relative overflow-hidden border border-[#002850]">
+        <div className="absolute right-0 top-0 w-96 h-full bg-radial from-[#006BB6]/40 via-transparent to-transparent pointer-events-none" />
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-blue-200 border border-white/15 text-xs font-semibold mb-2 backdrop-blur-md">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>District Facilitation & Scrutiny Center 1005 (VMK Washim)</span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
-              Welcome, {currentUser?.fullName || currentUser?.username || 'Officer'}
+          <div className="space-y-1">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+              Welcome, {currentUser?.fullName || currentUser?.username || 'Authorized User'}
             </h1>
-            <p className="text-xs sm:text-sm text-blue-100/80 mt-1 max-w-2xl leading-relaxed">
-              Central Command Hub — Access all portal modules, visitor registers, Google Sheets synchronization, and student scrutiny tools below.
+            <p className="text-xs sm:text-sm text-blue-100/90 max-w-2xl leading-relaxed">
+              Candidate scrutiny directory, visitor management registry, and verification toolkit.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => onNavigateTab('visitors')}
-              className="px-4 py-2.5 bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
-            >
-              <UserCheck className="w-4 h-4" />
-              <span>+ Log Visitor</span>
-            </button>
-            {isDnoAdmin && (
+          <div className="flex items-center gap-2 shrink-0 pt-1 md:pt-0">
+            {hasTabPermission(currentUser, 'visitors') && canAddVisitor && (
               <button
-                onClick={() => onNavigateTab('google_sheets')}
-                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                onClick={() => onNavigateTab('visitors')}
+                className="px-4 py-2.5 bg-white text-[#003B73] hover:bg-[#EAF4FB] active:scale-95 font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
               >
-                <FileSpreadsheet className="w-4 h-4" />
-                <span>Google Sheets (dno1)</span>
+                <UserCheck className="w-4 h-4 text-[#0056A6]" />
+                <span>+ Log Visitor</span>
+              </button>
+            )}
+            {canTicket && (
+              <button
+                onClick={onOpenTicketTool}
+                className="px-4 py-2.5 bg-[#002850] hover:bg-[#001D3D] border border-white/20 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+              >
+                <FileText className="w-4 h-4 text-amber-300" />
+                <span>Ticket Desk</span>
               </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* KPI Stats Bar */}
+      {/* Website-Grade KPI Stats Bar */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {quickStats.map((stat, i) => {
           const Icon = stat.icon;
           return (
             <div
               key={i}
-              className="bg-white/85 backdrop-blur-xs border border-slate-200/80 rounded-2xl p-4 flex items-center gap-3.5 shadow-2xs"
+              className="bg-white border border-[#D9E1EA] rounded-2xl p-4 flex items-center gap-3.5 shadow-xs hover:border-[#006BB6] transition-all"
             >
               <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${stat.color}`}>
                 <Icon className="w-5 h-5" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs text-slate-500 font-medium truncate">{stat.label}</p>
+                <p className="text-xs text-[#4B5563] font-medium truncate">{stat.label}</p>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-xl font-bold text-slate-900 font-mono">{stat.value}</span>
-                  <span className="text-[11px] text-slate-500 font-medium truncate">{stat.change}</span>
+                  <span className="text-xl font-bold text-[#1F2937] font-mono">{stat.value}</span>
+                  <span className="text-[11px] text-[#4B5563] font-medium truncate">{stat.change}</span>
                 </div>
               </div>
             </div>
@@ -304,130 +280,135 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         })}
       </div>
 
-      {/* Feature Launcher Hub (Buttons for Every Feature) */}
-      <div className="space-y-3">
+      {/* Authorized Tool Cards Section - STRICTLY contains only cards for tools granted to the user */}
+      <div className="space-y-3.5">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
-              Portal Features & Modules Hub
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#0056A6]" />
+            <h2 className="text-sm sm:text-base font-bold text-[#1F2937] tracking-tight uppercase">
+              Authorized Tools & Workspace Access
             </h2>
-            <p className="text-xs text-slate-500">
-              Click any feature button below to instantly launch the tool or navigate to its dedicated tab.
+          </div>
+          <span className="text-xs text-[#6B7280] font-medium">
+            Showing {authorizedCards.length} authorized {authorizedCards.length === 1 ? 'module' : 'modules'}
+          </span>
+        </div>
+
+        {authorizedCards.length === 0 ? (
+          <div className="bg-white border border-[#D9E1EA] rounded-2xl p-8 text-center shadow-xs">
+            <Info className="w-8 h-8 text-[#0056A6] mx-auto mb-2 opacity-80" />
+            <h3 className="text-sm font-bold text-[#1F2937]">No Tools Currently Assigned</h3>
+            <p className="text-xs text-[#6B7280] max-w-md mx-auto mt-1">
+              Your operator account has not been assigned interactive tool permissions. Please contact the DNO Administrator to grant tool access.
             </p>
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {allFeatures.map((feat) => {
-            const Icon = feat.icon;
-            return (
-              <div
-                key={feat.id}
-                className="bg-white/95 backdrop-blur-xs border border-slate-200/90 hover:border-blue-400 rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 hover:shadow-md shadow-xs group"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3.5">
-                    <div className={`w-11 h-11 rounded-xl border flex items-center justify-center ${feat.iconBg} group-hover:scale-105 transition-transform`}>
-                      <Icon className="w-5 h-5" />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {authorizedCards.map((feat) => {
+              const Icon = feat.icon;
+              return (
+                <div
+                  key={feat.id}
+                  className="bg-white border border-[#D9E1EA] hover:border-[#0056A6] rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 hover:shadow-md shadow-xs group"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-3.5">
+                      <div className={`w-11 h-11 rounded-xl border flex items-center justify-center ${feat.iconBg} group-hover:scale-105 transition-transform`}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      {feat.badge && (
+                        <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border flex items-center gap-1 ${feat.badgeColor}`}>
+                          {feat.isProtected && <Lock className="w-3 h-3 text-amber-700" />}
+                          <span>{feat.badge}</span>
+                        </span>
+                      )}
                     </div>
-                    {feat.badge && (
-                      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border flex items-center gap-1 ${feat.badgeColor}`}>
-                        {feat.isProtected && <Lock className="w-3 h-3 text-amber-700" />}
-                        <span>{feat.badge}</span>
-                      </span>
-                    )}
+
+                    <h3 className="text-sm sm:text-base font-bold text-[#1F2937] mb-1.5 group-hover:text-[#0056A6] transition-colors">
+                      {feat.title}
+                    </h3>
+                    <p className="text-xs text-[#4B5563] leading-relaxed mb-5">
+                      {feat.description}
+                    </p>
                   </div>
 
-                  <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-1 group-hover:text-blue-900 transition-colors">
-                    {feat.title}
-                  </h3>
-                  <p className="text-xs text-slate-600 leading-relaxed mb-5">
-                    {feat.description}
-                  </p>
+                  <button
+                    type="button"
+                    onClick={feat.onClick}
+                    className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-xs ${feat.btnColor} active:scale-[0.98] cursor-pointer`}
+                  >
+                    <span>{feat.btnText}</span>
+                    <ArrowUpRight className="w-4 h-4" />
+                  </button>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={feat.onClick}
-                  disabled={feat.disabled}
-                  className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-2xs ${
-                    feat.disabled
-                      ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                      : `${feat.btnColor} active:scale-[0.98] cursor-pointer`
-                  }`}
-                >
-                  <span>{feat.disabled ? 'Restricted Access' : feat.btnText}</span>
-                  {!feat.disabled && <ArrowUpRight className="w-4 h-4" />}
-                </button>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Recent Activity Table */}
-      <div className="bg-white/90 backdrop-blur-xs border border-slate-200/80 rounded-2xl p-5 shadow-xs">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+      {/* Live Candidate Scrutiny Summary */}
+      <div className="bg-white border border-[#D9E1EA] rounded-2xl p-5 shadow-xs">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#D9E1EA]">
           <div>
-            <h3 className="text-sm font-bold text-slate-900">Recent Candidate Activity</h3>
-            <p className="text-xs text-slate-500">Live summary of active scrutiny records</p>
+            <h3 className="text-sm font-bold text-[#1F2937]">Recent Candidate Scrutiny Activity</h3>
+            <p className="text-xs text-[#6B7280]">Live verification registry</p>
           </div>
-          <button
-            onClick={() => onNavigateTab('students')}
-            className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
-          >
-            <span>View All in Directory</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
-          </button>
+          {hasTabPermission(currentUser, 'students') && (
+            <button
+              onClick={() => onNavigateTab('students')}
+              className="text-xs font-bold text-[#0056A6] hover:text-[#003B73] flex items-center gap-1 cursor-pointer"
+            >
+              <span>View Full Directory</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
         {recentStudents.length === 0 ? (
-          <div className="p-8 text-center text-slate-400 text-xs">
+          <div className="p-8 text-center text-[#6B7280] text-xs">
             <p>No candidates currently logged in the active queue.</p>
-            <p className="mt-1 text-slate-500">
-              Go to the <b>Students</b> tab or open the tools above to register candidate records.
-            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="text-slate-500 border-b border-slate-100 bg-slate-50/50">
-                  <th className="py-2.5 px-3 font-semibold">Application ID</th>
-                  <th className="py-2.5 px-3 font-semibold">Candidate Name</th>
-                  <th className="py-2.5 px-3 font-semibold">Course</th>
-                  <th className="py-2.5 px-3 font-semibold">Status</th>
-                  <th className="py-2.5 px-3 font-semibold">Remarks</th>
-                  <th className="py-2.5 px-3 font-semibold text-right">Actions</th>
+                <tr className="text-[#4B5563] border-b border-[#D9E1EA] bg-[#F7F9FC]">
+                  <th className="py-2.5 px-3 font-bold">Application ID</th>
+                  <th className="py-2.5 px-3 font-bold">Candidate Name</th>
+                  <th className="py-2.5 px-3 font-bold">Course</th>
+                  <th className="py-2.5 px-3 font-bold">Status</th>
+                  <th className="py-2.5 px-3 font-bold">Remarks</th>
+                  <th className="py-2.5 px-3 font-bold text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-[#D9E1EA]">
                 {recentStudents.map((st) => (
-                  <tr key={st.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3 px-3 font-mono font-bold text-slate-800">{st.id}</td>
-                    <td className="py-3 px-3 font-medium text-slate-900">{st.name}</td>
-                    <td className="py-3 px-3 text-slate-600">{st.course}</td>
+                  <tr key={st.id} className="hover:bg-[#F7F9FC] transition-colors">
+                    <td className="py-3 px-3 font-mono font-bold text-[#003B73]">{st.id}</td>
+                    <td className="py-3 px-3 font-semibold text-[#1F2937]">{st.name}</td>
+                    <td className="py-3 px-3 text-[#4B5563]">{st.course}</td>
                     <td className="py-3 px-3">
                       <span
-                        className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
+                        className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
                           st.status === 'Verified'
-                            ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                             : st.status === 'Objection Raised'
-                            ? 'bg-amber-100 text-amber-800 border-amber-200'
-                            : 'bg-blue-100 text-blue-800 border-blue-200'
+                            ? 'bg-amber-50 text-amber-800 border-amber-200'
+                            : 'bg-blue-50 text-blue-800 border-blue-200'
                         }`}
                       >
                         {st.status}
                       </span>
                     </td>
-                    <td className="py-3 px-3 text-slate-500 truncate max-w-xs">{st.remarks}</td>
+                    <td className="py-3 px-3 text-[#6B7280] truncate max-w-xs">{st.remarks}</td>
                     <td className="py-3 px-3 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         {canWhatsapp && (
                           <button
                             onClick={onOpenWhatsappTool}
                             title="Send WhatsApp Notice"
-                            className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 border border-emerald-200 cursor-pointer"
+                            className="p-1.5 rounded-lg text-emerald-700 hover:bg-emerald-50 border border-emerald-200 cursor-pointer"
                           >
                             <MessageCircle className="w-3.5 h-3.5" />
                           </button>
@@ -435,8 +416,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         {canTicket && (
                           <button
                             onClick={onOpenTicketTool}
-                            title="Generate Objection Memo"
-                            className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 border border-blue-200 cursor-pointer"
+                            title="Generate Candidate Grievance Ticket"
+                            className="p-1.5 rounded-lg text-[#0056A6] hover:bg-[#EAF4FB] border border-[#D9E1EA] cursor-pointer"
                           >
                             <FileText className="w-3.5 h-3.5" />
                           </button>

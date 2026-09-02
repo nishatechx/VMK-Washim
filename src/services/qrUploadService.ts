@@ -1,5 +1,6 @@
 import { QrUploadedFile, QR_BROADCAST_CHANNEL } from '../types/qrUpload';
 import { db } from '../lib/firebase';
+import { sanitizeForFirestore } from './authService';
 import {
   collection,
   doc,
@@ -49,7 +50,7 @@ export const qrUploadService = {
     // 1. Post to Firebase Firestore Database
     try {
       const docRef = doc(db, 'qr_uploads', newFile.id);
-      await setDoc(docRef, newFile);
+      await setDoc(docRef, sanitizeForFirestore(newFile));
       console.log(`[Firebase Firestore] Saved document ${newFile.id} to Firestore`);
     } catch (firestoreErr) {
       console.warn('[Firebase Firestore] Warning saving to Firestore:', firestoreErr);

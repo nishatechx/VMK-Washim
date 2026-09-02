@@ -223,89 +223,44 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-5 bg-black/80 backdrop-blur-md overflow-y-auto"
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-5 bg-[#001D3D]/70 backdrop-blur-xs overflow-y-auto"
             onClick={onClose}
           >
             <motion.div
               id="qr-upload-modal-container"
-              initial={{
-                clipPath: 'inset(0% 0% 100% 0% round 16px)',
-                opacity: 0.3,
-                y: -15,
-              }}
-              animate={{
-                clipPath: 'inset(0% 0% 0% 0% round 16px)',
-                opacity: 1,
-                y: 0,
-              }}
-              exit={{
-                clipPath: 'inset(100% 0% 0% 0% round 16px)',
-                opacity: 0.2,
-                y: 15,
-              }}
-              transition={{
-                duration: 0.38,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-              className="relative w-full max-w-4xl bg-[#091a30] text-white rounded-2xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8),0_0_30px_rgba(59,130,246,0.3)] border border-blue-400/30 overflow-hidden my-auto max-h-[94vh] flex flex-col origin-top"
+              initial={{ opacity: 0, scale: 0.96, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 10 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="relative w-full max-w-4xl bg-[#F7F9FC] text-[#1F2937] rounded-2xl shadow-2xl border border-[#D9E1EA] overflow-hidden my-auto max-h-[94vh] flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Mac Titlebar Header */}
-              <div className="bg-gradient-to-r from-[#061527] via-[#0f2747] to-[#1e40af] px-4 sm:px-5 py-3 border-b border-blue-500/20 flex items-center justify-between shrink-0 select-none">
+              {/* Navy Header */}
+              <div className="bg-[#003B73] text-white px-5 sm:px-6 py-4 border-b border-[#002850] flex items-center justify-between shrink-0 select-none">
                 <div className="flex items-center gap-3">
-                  {/* Mac Traffic Lights */}
-                  <div className="flex items-center gap-2 group/traffic">
-                    <button
-                      id="mac-qr-close-btn"
-                      onClick={onClose}
-                      className="w-3.5 h-3.5 rounded-full bg-[#ff5f56] border border-[#e0443e] hover:bg-[#ff3b30] flex items-center justify-center shadow-sm transition-transform active:scale-90 cursor-pointer"
-                      title="Close (Esc)"
-                    >
-                      <X className="w-2 h-2 text-[#4c0000] opacity-0 group-hover/traffic:opacity-100 transition-opacity" />
-                    </button>
-
-                    <button
-                      id="mac-qr-minimize-btn"
-                      onClick={onClose}
-                      className="w-3.5 h-3.5 rounded-full bg-[#ffbd2e] border border-[#dea123] hover:bg-[#f59e0b] flex items-center justify-center shadow-sm transition-transform active:scale-90 cursor-pointer"
-                      title="Minimize"
-                    >
-                      <Minus className="w-2 h-2 text-[#5c3e00] opacity-0 group-hover/traffic:opacity-100 transition-opacity" />
-                    </button>
-
-                    <button
-                      id="mac-qr-zoom-btn"
-                      className="w-3.5 h-3.5 rounded-full bg-[#27c93f] border border-[#1aab29] hover:bg-[#10b981] flex items-center justify-center shadow-sm transition-transform active:scale-90 cursor-pointer"
-                      title="Active"
-                    >
-                      <Plus className="w-2 h-2 text-[#004d10] opacity-0 group-hover/traffic:opacity-100 transition-opacity" />
-                    </button>
+                  <div className="w-10 h-10 rounded-xl bg-[#0056A6] flex items-center justify-center text-white shadow-xs border border-white/20">
+                    <QrCode className="w-5 h-5 text-white" />
                   </div>
-
-                  <div className="h-4 w-px bg-blue-400/20 hidden sm:block ml-1" />
-
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-600 flex items-center justify-center shadow-md text-slate-950">
-                      <QrCode className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h2 className="text-sm font-bold text-white tracking-wide leading-tight">
-                        Upload by QR Code
-                      </h2>
-                    </div>
+                  <div>
+                    <h2 className="text-base sm:text-lg font-bold text-white tracking-wide leading-tight">
+                      Upload by QR Code
+                    </h2>
+                    <p className="text-xs text-blue-100">
+                      Scan documents via mobile to sync directly into software
+                    </p>
                   </div>
                 </div>
 
                 {/* Tab Navigation in Header */}
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center bg-black/30 p-0.5 rounded-lg border border-white/10">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center bg-[#002850] p-1 rounded-xl border border-[#0056A6]/40">
                     <button
                       onClick={() => setActiveTab('qr_sync')}
-                      className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                         activeTab === 'qr_sync'
-                          ? 'bg-amber-500 text-slate-950 shadow-sm'
-                          : 'text-blue-200 hover:text-white'
+                          ? 'bg-[#0056A6] text-white shadow-xs'
+                          : 'text-blue-100 hover:text-white hover:bg-white/10'
                       }`}
                     >
                       <Smartphone className="w-3.5 h-3.5" />
@@ -314,10 +269,10 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
 
                     <button
                       onClick={() => setActiveTab('software_vault')}
-                      className={`px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                         activeTab === 'software_vault'
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'text-blue-200 hover:text-white'
+                          ? 'bg-[#0056A6] text-white shadow-xs'
+                          : 'text-blue-100 hover:text-white hover:bg-white/10'
                       }`}
                     >
                       <FolderArchive className="w-3.5 h-3.5" />
@@ -328,23 +283,23 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
                   <button
                     id="close-qr-modal-btn"
                     onClick={onClose}
-                    className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-blue-100 hover:text-white transition-colors cursor-pointer ml-1"
+                    className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
                     title="Close (Esc)"
                   >
-                    <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
               </div>
 
               {/* Scrollable Body */}
-              <div className="p-4 sm:p-5 overflow-y-auto space-y-3.5 text-slate-900 bg-[#f4f7fb]">
+              <div className="p-4 sm:p-6 overflow-y-auto space-y-4 text-[#1F2937] bg-[#F7F9FC]">
                 {/* Notification Banner */}
                 {statusMessage.text && (
                   <div
                     className={`p-3 rounded-xl flex items-start gap-2.5 text-xs sm:text-sm font-medium animate-fadeIn ${
                       statusMessage.type === 'error'
                         ? 'bg-red-50 text-red-800 border border-red-200'
-                        : 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                        : 'bg-emerald-50 text-emerald-900 border border-emerald-200'
                     }`}
                   >
                     {statusMessage.type === 'error' ? (
@@ -355,7 +310,7 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
                     <span className="flex-1">{statusMessage.text}</span>
                     <button
                       onClick={() => setStatusMessage({ text: '', type: '' })}
-                      className="text-xs opacity-60 hover:opacity-100"
+                      className="text-xs opacity-60 hover:opacity-100 cursor-pointer"
                     >
                       ✕
                     </button>
@@ -364,18 +319,18 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
 
                 {/* TAB 1: QR Scanner & Live Session */}
                 {activeTab === 'qr_sync' && (
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
                     {/* Left Column: QR Code Card */}
-                    <div className="md:col-span-5 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center text-center space-y-3">
-                      <div className="w-full flex items-center justify-between border-b border-slate-100 pb-2">
-                        <span className="text-xs font-extrabold text-[#0f2747] flex items-center gap-1.5">
-                          <Smartphone className="w-4 h-4 text-amber-600" />
+                    <div className="md:col-span-5 bg-white p-5 rounded-2xl border border-[#D9E1EA] shadow-xs flex flex-col items-center text-center space-y-3.5">
+                      <div className="w-full flex items-center justify-between border-b border-[#D9E1EA] pb-2.5">
+                        <span className="text-xs font-bold text-[#003B73] uppercase tracking-wide flex items-center gap-1.5">
+                          <Smartphone className="w-4 h-4 text-[#0056A6]" />
                           Mobile Scan & Upload
                         </span>
                         <button
                           type="button"
                           onClick={handleGenerateNewSession}
-                          className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
+                          className="text-[11px] font-semibold text-[#0056A6] hover:text-[#003B73] flex items-center gap-1 cursor-pointer"
                           title="Generate new session QR code"
                         >
                           <RefreshCw className="w-3 h-3" />
@@ -384,7 +339,7 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
                       </div>
 
                       {/* QR Code Frame */}
-                      <div className="p-3 bg-white rounded-xl border-2 border-amber-300/80 shadow-inner flex items-center justify-center relative group">
+                      <div className="p-4 bg-[#F7F9FC] rounded-2xl border border-[#D9E1EA] flex items-center justify-center relative group">
                         <QRCodeSVG
                           value={uploadUrl}
                           size={175}
@@ -395,20 +350,20 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
 
                         {/* Central Logo */}
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                          <div className="w-9 h-9 rounded-lg bg-[#0f2747] border-2 border-amber-300 shadow-md flex items-center justify-center">
-                            <FileUp className="w-5 h-5 text-amber-400" />
+                          <div className="w-9 h-9 rounded-lg bg-[#003B73] border-2 border-white shadow-md flex items-center justify-center">
+                            <FileUp className="w-5 h-5 text-white" />
                           </div>
                         </div>
                       </div>
 
                       <div className="space-y-1">
-                        <p className="text-xs font-extrabold text-slate-800">
+                        <p className="text-xs font-bold text-[#1F2937]">
                           Scan with Mobile Camera / Scanner
                         </p>
-                        <p className="text-[11px] text-slate-500">
-                          Session: <span className="font-mono font-bold text-blue-700">#{sessionId}</span>
+                        <p className="text-[11px] text-[#6B7280]">
+                          Session: <span className="font-mono font-bold text-[#0056A6]">#{sessionId}</span>
                         </p>
-                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[10px] font-semibold border border-emerald-200">
+                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[10px] font-semibold border border-emerald-200">
                           <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                           Auto-downloads into Software Vault
                         </div>
@@ -419,17 +374,17 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
                         <button
                           type="button"
                           onClick={handleCopyLink}
-                          className="w-full py-2 px-3 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                          className="w-full py-2.5 px-4 rounded-xl bg-[#0056A6] hover:bg-[#003B73] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                         >
                           {copiedLink ? (
                             <>
-                              <Check className="w-3.5 h-3.5 text-emerald-600" />
-                              <span className="text-emerald-700">Upload Link Copied!</span>
+                              <Check className="w-3.5 h-3.5 text-white" />
+                              <span>Upload Link Copied!</span>
                             </>
                           ) : (
                             <>
                               <Copy className="w-3.5 h-3.5" />
-                              Copy Mobile Upload Link
+                              <span>Copy Mobile Upload Link</span>
                             </>
                           )}
                         </button>
@@ -438,7 +393,7 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
                           href={uploadUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="w-full py-1.5 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                          className="w-full py-2 px-4 rounded-xl bg-[#EAF4FB] hover:bg-[#d8eaf7] text-[#003B73] text-xs font-bold flex items-center justify-center gap-1.5 border border-[#D9E1EA] transition-colors"
                         >
                           <ExternalLink className="w-3 h-3" />
                           Open Mobile View in New Tab
@@ -447,15 +402,15 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
                     </div>
 
                     {/* Right Column: Direct Drop & Session Files */}
-                    <div className="md:col-span-7 space-y-3 flex flex-col">
+                    <div className="md:col-span-7 space-y-4 flex flex-col">
                       {/* Direct PC Import Box */}
-                      <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#D9E1EA] shadow-xs space-y-2.5">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-extrabold text-[#0f2747] flex items-center gap-1.5">
-                            <UploadCloud className="w-4 h-4 text-emerald-600" />
+                          <span className="text-xs font-bold text-[#003B73] uppercase tracking-wide flex items-center gap-1.5">
+                            <UploadCloud className="w-4 h-4 text-[#0056A6]" />
                             Direct Import to Software Memory
                           </span>
-                          <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-mono">
+                          <span className="text-[10px] bg-[#EAF4FB] text-[#003B73] px-2 py-0.5 rounded font-mono font-bold">
                             PDF • JPEG • PNG
                           </span>
                         </div>
@@ -471,25 +426,25 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
 
                         <div
                           onClick={() => localFileInputRef.current?.click()}
-                          className="border-2 border-dashed border-blue-200 hover:border-blue-500 rounded-xl p-3 text-center bg-blue-50/40 hover:bg-blue-50/80 cursor-pointer transition-colors"
+                          className="border-2 border-dashed border-[#0056A6]/30 hover:border-[#0056A6] rounded-xl p-4 text-center bg-[#EAF4FB]/40 hover:bg-[#EAF4FB]/80 cursor-pointer transition-colors"
                         >
-                          <FileUp className="w-5 h-5 text-blue-600 mx-auto mb-1" />
-                          <p className="text-xs font-bold text-slate-800">
+                          <FileUp className="w-6 h-6 text-[#0056A6] mx-auto mb-1" />
+                          <p className="text-xs font-bold text-[#1F2937]">
                             Click to Browse or Drag & Drop Documents
                           </p>
-                          <p className="text-[10px] text-slate-500">Loads immediately into in-app viewer</p>
+                          <p className="text-[10px] text-[#6B7280]">Loads immediately into in-app viewer</p>
                         </div>
                       </div>
 
                       {/* Current Session Files List */}
-                      <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex-1 flex flex-col space-y-2">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#D9E1EA] shadow-xs flex-1 flex flex-col space-y-3">
+                        <div className="flex items-center justify-between border-b border-[#D9E1EA] pb-2.5">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-extrabold text-[#0f2747]">
+                            <span className="text-xs font-bold text-[#003B73] uppercase tracking-wide">
                               Current Session Documents ({files.length})
                             </span>
                             {files.length > 0 && (
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
                                 In-Software Ready
                               </span>
                             )}
@@ -499,7 +454,7 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
                             <button
                               type="button"
                               onClick={() => setPreviewFile(files[0])}
-                              className="text-[11px] font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1 cursor-pointer"
+                              className="text-[11px] font-bold text-[#0056A6] hover:text-[#003B73] flex items-center gap-1 cursor-pointer"
                             >
                               <Eye className="w-3 h-3" />
                               Open First Document
@@ -510,12 +465,12 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
                         {/* Files Stream */}
                         <div className="flex-1 min-h-[160px] max-h-64 overflow-y-auto space-y-2 pr-1">
                           {files.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 space-y-1.5">
-                              <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                                <UploadCloud className="w-5 h-5" />
+                            <div className="h-full flex flex-col items-center justify-center text-center p-6 text-[#6B7280] space-y-1.5">
+                              <div className="w-10 h-10 rounded-full bg-[#F7F9FC] border border-[#D9E1EA] flex items-center justify-center text-[#6B7280]">
+                                <UploadCloud className="w-5 h-5 text-[#0056A6]" />
                               </div>
-                              <p className="text-xs font-semibold text-slate-600">Waiting for mobile scan...</p>
-                              <p className="text-[11px] text-slate-400 max-w-xs">
+                              <p className="text-xs font-bold text-[#1F2937]">Waiting for mobile scan...</p>
+                              <p className="text-[11px] text-[#6B7280] max-w-xs">
                                 When a candidate scans the QR code and uploads documents, they appear here instantly ready to view & verify inside the software.
                               </p>
                             </div>
@@ -525,7 +480,7 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
                               return (
                                 <div
                                   key={file.id}
-                                  className="p-2.5 rounded-lg border border-slate-200 bg-slate-50/90 hover:bg-blue-50/50 flex items-center justify-between gap-2.5 transition-colors"
+                                  className="p-3 rounded-xl border border-[#D9E1EA] bg-[#F7F9FC] hover:bg-[#EAF4FB]/60 flex items-center justify-between gap-3 transition-colors"
                                 >
                                   <div
                                     className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer"
@@ -533,28 +488,28 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
                                     title="Click to Open in Software Viewer"
                                   >
                                     {isPdf ? (
-                                      <div className="w-8 h-8 rounded-lg bg-red-100 border border-red-200 flex items-center justify-center shrink-0 text-red-600">
+                                      <div className="w-8 h-8 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center shrink-0 text-rose-600">
                                         <FileText className="w-4 h-4" />
                                       </div>
                                     ) : (
-                                      <div className="w-8 h-8 rounded-lg bg-emerald-100 border border-emerald-200 flex items-center justify-center shrink-0 overflow-hidden">
+                                      <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0 overflow-hidden">
                                         <img src={file.dataUrl} alt={file.name} className="w-full h-full object-cover" />
                                       </div>
                                     )}
 
                                     <div className="min-w-0 flex-1">
                                       <div className="flex items-center gap-1.5">
-                                        <p className="text-xs font-bold text-slate-800 truncate" title={file.name}>
+                                        <p className="text-xs font-bold text-[#1F2937] truncate" title={file.name}>
                                           {file.name}
                                         </p>
                                         {file.verifiedStamp && (
-                                          <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-0.5">
+                                          <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-0.5">
                                             <ShieldCheck className="w-2.5 h-2.5" />
                                             Verified
                                           </span>
                                         )}
                                       </div>
-                                      <p className="text-[10px] text-slate-500 font-mono">
+                                      <p className="text-[10px] text-[#6B7280] font-mono">
                                         {formatBytes(file.size)} • {file.category || 'Doc'} • {new Date(file.uploadedAt).toLocaleTimeString()}
                                       </p>
                                     </div>
@@ -566,18 +521,18 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
                                     <button
                                       type="button"
                                       onClick={() => setPreviewFile(file)}
-                                      className="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1 shadow-sm transition-all cursor-pointer"
+                                      className="px-3 py-1.5 rounded-xl bg-[#0056A6] hover:bg-[#003B73] text-white text-xs font-bold flex items-center gap-1 shadow-xs transition-all cursor-pointer"
                                       title="Open and Inspect Document in Software Viewer"
                                     >
                                       <Eye className="w-3.5 h-3.5" />
-                                      <span>Open in Software</span>
+                                      <span>Open</span>
                                     </button>
 
                                     {/* Direct Print Button */}
                                     <button
                                       type="button"
                                       onClick={() => printDocumentDirectly(file.dataUrl, file.name, !isPdf)}
-                                      className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+                                      className="p-1.5 rounded-xl bg-white hover:bg-[#F7F9FC] text-[#4B5563] border border-[#D9E1EA] transition-colors cursor-pointer"
                                       title="Direct Print from Software"
                                     >
                                       <Printer className="w-3.5 h-3.5" />
@@ -587,7 +542,7 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
                                     <button
                                       type="button"
                                       onClick={() => triggerFileDownload(file.dataUrl, file.name)}
-                                      className="p-1.5 rounded-lg bg-slate-100 hover:bg-emerald-100 text-slate-600 hover:text-emerald-700 transition-colors cursor-pointer"
+                                      className="p-1.5 rounded-xl bg-white hover:bg-emerald-50 text-[#4B5563] hover:text-emerald-700 border border-[#D9E1EA] transition-colors cursor-pointer"
                                       title="Optional: Save Copy to PC Device"
                                     >
                                       <Download className="w-3.5 h-3.5" />
@@ -597,7 +552,7 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
                                     <button
                                       type="button"
                                       onClick={() => handleDeleteFile(file.id)}
-                                      className="p-1.5 rounded-lg bg-slate-100 hover:bg-red-100 text-slate-500 hover:text-red-700 transition-colors cursor-pointer"
+                                      className="p-1.5 rounded-xl bg-white hover:bg-red-50 text-[#4B5563] hover:text-red-700 border border-[#D9E1EA] transition-colors cursor-pointer"
                                       title="Remove from Software"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
@@ -613,18 +568,18 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
                   </div>
                 )}
 
-                {/* TAB 2: Software Vault (All Documents Downloaded & Stored in Software) */}
+                {/* TAB 2: Software Vault */}
                 {activeTab === 'software_vault' && (
-                  <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                  <div className="bg-white p-5 rounded-2xl border border-[#D9E1EA] shadow-xs space-y-4">
                     {/* Header + Search Bar + Filters */}
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pb-2 border-b border-slate-100">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-3 border-b border-[#D9E1EA]">
                       <div className="flex items-center gap-2">
-                        <FolderArchive className="w-5 h-5 text-blue-600" />
+                        <FolderArchive className="w-5 h-5 text-[#0056A6]" />
                         <div>
-                          <h3 className="text-xs sm:text-sm font-bold text-slate-800">
+                          <h3 className="text-xs sm:text-sm font-bold text-[#003B73]">
                             In-Software Document Vault ({displayedVaultFiles.length} / {vaultFiles.length})
                           </h3>
-                          <p className="text-[10px] text-slate-500">
+                          <p className="text-[10px] text-[#6B7280]">
                             Persistent document memory stored inside the software console.
                           </p>
                         </div>
@@ -634,39 +589,47 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
                       <div className="flex items-center gap-2 flex-wrap">
                         {/* Search Input */}
                         <div className="relative">
-                          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                          <Search className="w-3.5 h-3.5 text-[#6B7280] absolute left-2.5 top-1/2 -translate-y-1/2" />
                           <input
                             type="text"
                             placeholder="Search document name..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-8 pr-2.5 py-1 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-slate-50"
+                            className="pl-8 pr-2.5 py-1.5 text-xs border border-[#D9E1EA] rounded-xl focus:outline-none focus:border-[#0056A6] focus:ring-2 focus:ring-[#0056A6]/20 bg-white"
                           />
                         </div>
 
                         {/* Type Filters */}
-                        <div className="flex items-center bg-slate-100 p-0.5 rounded-lg text-[11px] font-semibold text-slate-600">
+                        <div className="flex items-center bg-[#F7F9FC] p-1 rounded-xl border border-[#D9E1EA] text-xs font-bold text-[#4B5563]">
                           <button
                             onClick={() => setTypeFilter('all')}
-                            className={`px-2 py-0.5 rounded ${typeFilter === 'all' ? 'bg-white shadow-xs text-blue-700' : ''}`}
+                            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                              typeFilter === 'all' ? 'bg-[#0056A6] text-white shadow-xs' : 'hover:text-[#003B73]'
+                            }`}
                           >
                             All
                           </button>
                           <button
                             onClick={() => setTypeFilter('pdf')}
-                            className={`px-2 py-0.5 rounded ${typeFilter === 'pdf' ? 'bg-white shadow-xs text-blue-700' : ''}`}
+                            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                              typeFilter === 'pdf' ? 'bg-[#0056A6] text-white shadow-xs' : 'hover:text-[#003B73]'
+                            }`}
                           >
                             PDFs
                           </button>
                           <button
                             onClick={() => setTypeFilter('image')}
-                            className={`px-2 py-0.5 rounded ${typeFilter === 'image' ? 'bg-white shadow-xs text-blue-700' : ''}`}
+                            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                              typeFilter === 'image' ? 'bg-[#0056A6] text-white shadow-xs' : 'hover:text-[#003B73]'
+                            }`}
                           >
                             Images
                           </button>
                           <button
                             onClick={() => setTypeFilter('verified')}
-                            className={`px-2 py-0.5 rounded ${typeFilter === 'verified' ? 'bg-white shadow-xs text-emerald-700' : ''}`}
+                            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                              typeFilter === 'verified' ? 'bg-emerald-600 text-white shadow-xs' : 'hover:text-emerald-700'
+                            }`}
                           >
                             Verified
                           </button>
@@ -677,10 +640,10 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
                     {/* Vault Documents Grid */}
                     <div className="min-h-[250px] max-h-[380px] overflow-y-auto space-y-2 pr-1">
                       {displayedVaultFiles.length === 0 ? (
-                        <div className="py-12 flex flex-col items-center justify-center text-center text-slate-400 space-y-2">
-                          <FolderArchive className="w-10 h-10 text-slate-300" />
-                          <p className="text-xs font-semibold text-slate-600">No documents found in vault</p>
-                          <p className="text-[11px] text-slate-400">
+                        <div className="py-12 flex flex-col items-center justify-center text-center text-[#6B7280] space-y-2">
+                          <FolderArchive className="w-10 h-10 text-[#6B7280]/50" />
+                          <p className="text-xs font-bold text-[#1F2937]">No documents found in vault</p>
+                          <p className="text-[11px] text-[#6B7280]">
                             {searchQuery ? 'Try modifying your search filter.' : 'Upload files via the QR Scanner tab or import directly.'}
                           </p>
                         </div>
@@ -690,38 +653,38 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
                           return (
                             <div
                               key={file.id}
-                              className="p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-slate-100 flex items-center justify-between gap-3 transition-colors"
+                              className="p-3.5 rounded-xl border border-[#D9E1EA] bg-[#F7F9FC] hover:bg-[#EAF4FB]/50 flex items-center justify-between gap-3 transition-colors"
                             >
                               <div
                                 className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
                                 onClick={() => setPreviewFile(file)}
                               >
                                 {isPdf ? (
-                                  <div className="w-9 h-9 rounded-lg bg-red-100 border border-red-200 flex items-center justify-center shrink-0 text-red-600">
+                                  <div className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center shrink-0 text-rose-600">
                                     <FileText className="w-5 h-5" />
                                   </div>
                                 ) : (
-                                  <div className="w-9 h-9 rounded-lg bg-emerald-100 border border-emerald-200 flex items-center justify-center shrink-0 overflow-hidden">
+                                  <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0 overflow-hidden">
                                     <img src={file.dataUrl} alt={file.name} className="w-full h-full object-cover" />
                                   </div>
                                 )}
 
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center gap-2">
-                                    <h4 className="text-xs font-bold text-slate-800 truncate" title={file.name}>
+                                    <h4 className="text-xs font-bold text-[#1F2937] truncate" title={file.name}>
                                       {file.name}
                                     </h4>
-                                    <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-blue-100 text-blue-800">
+                                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#EAF4FB] text-[#003B73]">
                                       {file.category || 'Candidate Doc'}
                                     </span>
                                     {file.verifiedStamp && (
-                                      <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-0.5">
+                                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-0.5">
                                         <ShieldCheck className="w-3 h-3" />
                                         Verified
                                       </span>
                                     )}
                                   </div>
-                                  <p className="text-[10px] text-slate-500 font-mono mt-0.5">
+                                  <p className="text-[10px] text-[#6B7280] font-mono mt-0.5">
                                     {formatBytes(file.size)} • Session #{file.sessionId || sessionId} • {new Date(file.uploadedAt).toLocaleString()}
                                   </p>
                                 </div>
@@ -733,10 +696,10 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
                                 <button
                                   type="button"
                                   onClick={() => handleToggleStamp(file)}
-                                  className={`p-1.5 rounded-lg border text-xs transition-colors cursor-pointer ${
+                                  className={`p-2 rounded-xl border text-xs transition-colors cursor-pointer ${
                                     file.verifiedStamp
-                                      ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                      : 'bg-white text-[#4B5563] border-[#D9E1EA] hover:bg-[#F7F9FC]'
                                   }`}
                                   title={file.verifiedStamp ? 'Marked as Verified' : 'Stamp as Verified'}
                                 >
@@ -747,18 +710,18 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
                                 <button
                                   type="button"
                                   onClick={() => setPreviewFile(file)}
-                                  className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1 shadow-sm transition-all cursor-pointer"
+                                  className="px-3.5 py-1.5 rounded-xl bg-[#0056A6] hover:bg-[#003B73] text-white text-xs font-bold flex items-center gap-1 shadow-xs transition-all cursor-pointer"
                                   title="Open in Software Viewer"
                                 >
                                   <Eye className="w-3.5 h-3.5" />
-                                  <span>Open in Software</span>
+                                  <span>Open</span>
                                 </button>
 
                                 {/* Direct Print */}
                                 <button
                                   type="button"
                                   onClick={() => printDocumentDirectly(file.dataUrl, file.name, !isPdf)}
-                                  className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 transition-colors cursor-pointer"
+                                  className="p-2 rounded-xl bg-white border border-[#D9E1EA] hover:bg-[#F7F9FC] text-[#4B5563] transition-colors cursor-pointer"
                                   title="Direct Print Document"
                                 >
                                   <Printer className="w-3.5 h-3.5" />
@@ -768,7 +731,7 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
                                 <button
                                   type="button"
                                   onClick={() => triggerFileDownload(file.dataUrl, file.name)}
-                                  className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 transition-colors cursor-pointer"
+                                  className="p-2 rounded-xl bg-white border border-[#D9E1EA] hover:bg-emerald-50 text-[#4B5563] hover:text-emerald-700 transition-colors cursor-pointer"
                                   title="Export Copy to PC Device"
                                 >
                                   <Download className="w-3.5 h-3.5" />
@@ -778,7 +741,7 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteFile(file.id)}
-                                  className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-red-50 text-slate-500 hover:text-red-700 transition-colors cursor-pointer"
+                                  className="p-2 rounded-xl bg-white border border-[#D9E1EA] hover:bg-rose-50 text-[#4B5563] hover:text-rose-700 transition-colors cursor-pointer"
                                   title="Delete Document"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
@@ -794,16 +757,16 @@ export const QrUploadModal: React.FC<QrUploadModalProps> = ({ isOpen, onClose })
               </div>
 
               {/* Bottom Footer */}
-              <div className="bg-[#061527] px-4 py-2.5 border-t border-blue-500/20 flex items-center justify-between text-xs text-blue-200/80">
+              <div className="bg-white px-5 py-3 border-t border-[#D9E1EA] flex items-center justify-between text-xs text-[#6B7280]">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span className="text-[11px] font-mono">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="text-[11px]">
                     All documents are downloaded instantly inside software storage • No local disk storage needed
                   </span>
                 </div>
                 <button
                   onClick={onClose}
-                  className="px-3.5 py-1 rounded bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-xl bg-[#F7F9FC] hover:bg-[#EAF4FB] text-[#003B73] border border-[#D9E1EA] text-xs font-bold transition-colors cursor-pointer"
                 >
                   Close
                 </button>

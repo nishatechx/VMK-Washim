@@ -26,7 +26,7 @@ import {
   Trash,
   Settings2,
 } from 'lucide-react';
-import { UserProfile, TabPermission, FeaturePermission } from '../../types/auth';
+import { UserProfile, TabPermission, FeaturePermission, UserRole } from '../../types/auth';
 import {
   getAllUsers,
   subscribeToUsers,
@@ -36,11 +36,7 @@ import {
   AVAILABLE_FEATURES,
   DNO_USER,
 } from '../../services/authService';
-import {
-  uploadImageToImgbb,
-  getSavedImgbbKey,
-  saveImgbbKey,
-} from '../../services/imgbbService';
+import { uploadImageToFirebase } from '../../services/imageStorageService';
 
 interface UserManagementViewProps {
   currentUser: UserProfile;
@@ -64,17 +60,16 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [profilePicture, setProfilePicture] = useState('');
-  const [isUploadingImgbb, setIsUploadingImgbb] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState('');
-  const [imgbbApiKey, setImgbbApiKey] = useState(() => getSavedImgbbKey());
-  const [showApiKeyConfig, setShowApiKeyConfig] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [role, setRole] = useState<'dno' | 'operator' | 'counsellor' | 'custom'>('operator');
+  const [role, setRole] = useState<UserRole>('supporting_staff');
   const [allowedTabs, setAllowedTabs] = useState<TabPermission[]>([
     'dashboard',
+    'visitors',
     'students',
     'profile',
   ]);
@@ -82,6 +77,8 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
     'whatsapp_tool',
     'qr_upload_tool',
     'ticket_generator_tool',
+    'add_candidate',
+    'add_visitor',
   ]);
   const [isActive, setIsActive] = useState<boolean>(true);
 
@@ -107,15 +104,15 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
     setPassword('');
     setShowPassword(false);
     setFullName('');
-    setDesignation('Scrutiny Verification Operator');
+    setDesignation('Supporting Staff');
     setPhone('');
     setEmail('');
     setProfilePicture('');
-    setIsUploadingImgbb(false);
+    setIsUploadingImage(false);
     setUploadError('');
-    setRole('operator');
-    setAllowedTabs(['dashboard', 'students', 'counselling', 'profile']);
-    setAllowedFeatures(['whatsapp_tool', 'qr_upload_tool', 'ticket_generator_tool', 'add_candidate']);
+    setRole('supporting_staff');
+    setAllowedTabs(['dashboard', 'visitors', 'students', 'profile']);
+    setAllowedFeatures(['whatsapp_tool', 'qr_upload_tool', 'ticket_generator_tool', 'add_candidate', 'add_visitor']);
     setIsActive(true);
     setFeedback({ message: '', type: '' });
     setIsModalOpen(true);
@@ -131,9 +128,9 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
     setPhone(user.phone || '');
     setEmail(user.email || '');
     setProfilePicture(user.profilePicture || '');
-    setIsUploadingImgbb(false);
+    setIsUploadingImage(false);
     setUploadError('');
-    setRole(user.role);
+    setRole(user.role === 'operator' ? 'supporting_staff' : user.role);
     setAllowedTabs([...user.allowedTabs]);
     setAllowedFeatures([...user.allowedFeatures]);
     setIsActive(user.isActive);
@@ -141,8 +138,8 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
     setIsModalOpen(true);
   };
 
-  // Handle uploading selected image file to ImgBB (https://api.imgbb.com/1/upload)
-  const handleFileForImgbb = async (file: File) => {
+  // Handle uploading selected image file directly to Firebase Cloud Database
+  const handleFileForFirebase = async (file: File) => {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
@@ -150,37 +147,32 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
       return;
     }
 
-    // Limit to 20MB for fast uploads
+    // Limit to 20MB for fast processing
     if (file.size > 20 * 1024 * 1024) {
       setUploadError('Image file is too large (Maximum 20MB allowed).');
       return;
     }
 
     try {
-      setIsUploadingImgbb(true);
+      setIsUploadingImage(true);
       setUploadError('');
 
-      const result = await uploadImageToImgbb(file, `${username || 'user'}_avatar`, imgbbApiKey);
+      const result = await uploadImageToFirebase(file, `${username || 'user'}_avatar`, currentUser?.id);
       if (result.displayUrl || result.url) {
         setProfilePicture(result.displayUrl || result.url);
-        if (result.isLocalFallback && !imgbbApiKey) {
-          // Non-blocking info
-          console.info('Photo saved locally. Add free ImgBB API key for CDN hosting.');
-        }
       }
     } catch (err: any) {
-      console.error('ImgBB Upload Failed:', err);
-      // Fallback already protects from errors, but if anything slips through:
+      console.error('Firebase Image Upload Failed:', err);
       setUploadError('Could not process image file. Please try another image.');
     } finally {
-      setIsUploadingImgbb(false);
+      setIsUploadingImage(false);
     }
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      handleFileForImgbb(file);
+      handleFileForFirebase(file);
     }
   };
 
@@ -189,13 +181,8 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
     setIsDragOver(false);
     const file = e.dataTransfer.files?.[0];
     if (file) {
-      handleFileForImgbb(file);
+      handleFileForFirebase(file);
     }
-  };
-
-  const handleSaveApiKey = () => {
-    saveImgbbKey(imgbbApiKey);
-    setShowApiKeyConfig(false);
   };
 
   const handleToggleTab = (tabId: TabPermission) => {
@@ -222,20 +209,16 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
     setAllowedTabs(['profile']);
   };
 
-  const handleRolePreset = (selectedRole: 'operator' | 'counsellor' | 'dno' | 'custom') => {
+  const handleRolePreset = (selectedRole: 'counsellor' | 'supporting_staff') => {
     setRole(selectedRole);
-    if (selectedRole === 'operator') {
-      setDesignation('Scrutiny Center Verification Officer');
-      setAllowedTabs(['dashboard', 'visitors', 'students', 'counselling', 'profile']);
-      setAllowedFeatures(['whatsapp_tool', 'qr_upload_tool', 'ticket_generator_tool', 'add_candidate', 'add_visitor']);
-    } else if (selectedRole === 'counsellor') {
+    if (selectedRole === 'counsellor') {
       setDesignation('Student Guidance Counsellor');
-      setAllowedTabs(['dashboard', 'visitors', 'counselling', 'students', 'profile']);
-      setAllowedFeatures(['whatsapp_tool', 'ticket_generator_tool']);
-    } else if (selectedRole === 'dno') {
-      setDesignation('District Nodal Officer (DNO)');
-      setAllowedTabs(AVAILABLE_TABS.map((t) => t.id));
-      setAllowedFeatures(AVAILABLE_FEATURES.map((f) => f.id));
+      setAllowedTabs(['dashboard', 'visitors', 'students', 'profile']);
+      setAllowedFeatures(['whatsapp_tool', 'ticket_generator_tool', 'add_candidate', 'add_visitor']);
+    } else if (selectedRole === 'supporting_staff') {
+      setDesignation('Supporting Staff');
+      setAllowedTabs(['dashboard', 'visitors', 'students', 'profile']);
+      setAllowedFeatures(['whatsapp_tool', 'qr_upload_tool', 'ticket_generator_tool', 'add_candidate', 'add_visitor']);
     }
   };
 
@@ -265,13 +248,13 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
       designation: designation.trim() || 'Portal Operator',
       phone: phone.trim(),
       email: email.trim(),
-      profilePicture: profilePicture.trim() || undefined,
       role: role,
       allowedTabs: allowedTabs,
       allowedFeatures: allowedFeatures,
       isActive: isActive,
       createdAt: editingUser ? editingUser.createdAt : new Date().toISOString(),
-      lastLogin: editingUser?.lastLogin,
+      ...(profilePicture.trim() ? { profilePicture: profilePicture.trim() } : {}),
+      ...(editingUser?.lastLogin ? { lastLogin: editingUser.lastLogin } : {}),
     };
 
     const res = saveUser(newUser);
@@ -337,7 +320,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
         <div className="space-y-1">
           <p className="font-bold text-blue-900">Role-Based Access Control (RBAC) System</p>
           <p className="text-blue-800/90 leading-relaxed">
-            As the <b>District Nodal Officer (DNO)</b>, you can create customized profiles for center staff (e.g. Scrutiny Officers, Guidance Counsellors, Helpdesk Staff). Each user will only see the specific sidebar tabs and functional tool dialogs that you permit.
+            As the <b>District Nodal Officer (DNO)</b>, you can create staff profiles (Counsellor or Supporting Staff). Each user will only see the specific sidebar tabs and functional tool dialogs that you permit.
           </p>
         </div>
       </div>
@@ -420,14 +403,16 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                         className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide border ${
                           u.role === 'dno'
                             ? 'bg-blue-50 text-blue-700 border-blue-200'
-                            : u.role === 'operator'
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                             : u.role === 'counsellor'
                             ? 'bg-purple-50 text-purple-700 border-purple-200'
-                            : 'bg-amber-50 text-amber-700 border-amber-200'
+                            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                         }`}
                       >
-                        {u.role}
+                        {u.role === 'dno'
+                          ? 'DNO Admin'
+                          : u.role === 'counsellor'
+                          ? 'Counsellor'
+                          : 'Supporting Staff'}
                       </span>
                     </td>
 
@@ -546,61 +531,23 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                 </div>
               )}
 
-              {/* Profile Picture & ImgBB Upload Section */}
+              {/* Profile Picture & Firebase Cloud Storage Section */}
               <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/90 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-bold text-slate-800 flex items-center gap-1.5 text-xs uppercase tracking-wide">
-                      <Camera className="w-4 h-4 text-blue-600" />
-                      Profile Picture (ImgBB Cloud Upload)
+                      <Camera className="w-4 h-4 text-[#0056A6]" />
+                      Profile Picture (Firebase Cloud Storage)
                     </h4>
                     <p className="text-[11px] text-slate-500">
-                      Upload user profile picture to ImgBB via{' '}
-                      <span className="font-mono text-blue-600 font-semibold">
-                        https://api.imgbb.com/1/upload
-                      </span>
+                      Photos are compressed & synced to Firebase Firestore database in real-time
                     </p>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowApiKeyConfig(!showApiKeyConfig)}
-                    className="flex items-center gap-1 text-[11px] text-slate-500 hover:text-blue-600 hover:underline cursor-pointer"
-                    title="Configure custom ImgBB API Key"
-                  >
-                    <Settings2 className="w-3.5 h-3.5" />
-                    <span>API Config</span>
-                  </button>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Firebase Active
+                  </span>
                 </div>
-
-                {/* Optional ImgBB API Key Configuration */}
-                {showApiKeyConfig && (
-                  <div className="p-3 bg-white rounded-xl border border-blue-200 text-xs space-y-2 animate-in fade-in duration-150">
-                    <div className="flex items-center justify-between">
-                      <label className="font-bold text-slate-700">ImgBB API Key:</label>
-                      <span className="text-[10px] text-slate-400">Optional custom key</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={imgbbApiKey}
-                        onChange={(e) => setImgbbApiKey(e.target.value)}
-                        placeholder="Enter ImgBB API Key (e.g. 2d92...)"
-                        className="flex-1 px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs font-mono focus:outline-none focus:border-blue-600"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleSaveApiKey}
-                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs transition-colors cursor-pointer"
-                      >
-                        Save Key
-                      </button>
-                    </div>
-                    <p className="text-[10px] text-slate-400">
-                      Get a free key from <a href="https://api.imgbb.com" target="_blank" rel="noreferrer" className="text-blue-600 underline">api.imgbb.com</a>. Default public key is pre-configured.
-                    </p>
-                  </div>
-                )}
 
                 {/* Upload Zone & Photo Preview */}
                 <div className="flex flex-col sm:flex-row items-center gap-4 bg-white p-3.5 rounded-xl border border-slate-200">
@@ -611,7 +558,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                         <img
                           src={profilePicture}
                           alt="User Profile Preview"
-                          className="w-20 h-20 rounded-2xl object-cover border-2 border-blue-600 shadow-md ring-2 ring-blue-100"
+                          className="w-20 h-20 rounded-2xl object-cover border-2 border-[#0056A6] shadow-md ring-2 ring-blue-100"
                         />
                         <button
                           type="button"
@@ -650,25 +597,25 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                       }}
                       onDragLeave={() => setIsDragOver(false)}
                       onDrop={handleDrop}
-                      onClick={() => !isUploadingImgbb && fileInputRef.current?.click()}
+                      onClick={() => !isUploadingImage && fileInputRef.current?.click()}
                       className={`p-3 rounded-xl border-2 border-dashed transition-all text-center cursor-pointer ${
                         isDragOver
-                          ? 'border-blue-600 bg-blue-50/60'
-                          : isUploadingImgbb
+                          ? 'border-[#0056A6] bg-blue-50/60'
+                          : isUploadingImage
                           ? 'border-blue-300 bg-blue-50/30 cursor-wait'
-                          : 'border-slate-200 hover:border-blue-400 hover:bg-slate-50'
+                          : 'border-slate-200 hover:border-[#006BB6] hover:bg-slate-50'
                       }`}
                     >
-                      {isUploadingImgbb ? (
+                      {isUploadingImage ? (
                         <div className="flex items-center justify-center gap-2 text-blue-700 py-1 font-semibold text-xs">
-                          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                          <span>Uploading image to ImgBB cloud...</span>
+                          <Loader2 className="w-4 h-4 animate-spin text-[#0056A6]" />
+                          <span>Saving image to Firebase Cloud Storage...</span>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center justify-center py-0.5">
-                          <div className="flex items-center gap-1.5 text-blue-700 font-bold text-xs">
-                            <UploadCloud className="w-4 h-4 text-blue-600" />
-                            <span>Choose Photo to Upload (ImgBB)</span>
+                          <div className="flex items-center gap-1.5 text-[#0056A6] font-bold text-xs">
+                            <UploadCloud className="w-4 h-4 text-[#0056A6]" />
+                            <span>Choose Photo to Upload (Firebase)</span>
                           </div>
                           <span className="text-[10px] text-slate-400 mt-0.5">
                             Click to browse or drag & drop (JPG, PNG, WebP up to 20MB)
@@ -694,22 +641,13 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
                       </div>
                     )}
 
-                    {/* Hosted ImgBB URL indicator */}
+                    {/* Stored Photo status */}
                     {profilePicture && (
                       <div className="flex items-center justify-between gap-2 p-1.5 bg-emerald-50 border border-emerald-200 rounded-lg text-[11px] text-emerald-800 font-medium">
                         <div className="flex items-center gap-1.5 truncate">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                          <span className="truncate">Image Hosted: {profilePicture}</span>
+                          <span>Photo ready & stored in Firebase</span>
                         </div>
-                        <a
-                          href={profilePicture}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 hover:text-emerald-900 shrink-0 ml-1 underline"
-                        >
-                          <span>Open</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
                       </div>
                     )}
                   </div>
@@ -719,31 +657,41 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
               {/* Role Presets */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase">
-                  Select Profile Role Archetype
+                  Select Staff Role
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {[
-                    { id: 'operator' as const, label: 'Scrutiny Operator' },
-                    { id: 'counsellor' as const, label: 'Guidance Counsellor' },
-                    { id: 'dno' as const, label: 'DNO Officer' },
-                    { id: 'custom' as const, label: 'Custom Permissions' },
-                  ].map((r) => (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => handleRolePreset(r.id)}
-                      className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                        role === r.id
-                          ? 'border-blue-600 bg-blue-50 text-blue-900 font-bold ring-2 ring-blue-100 shadow-xs'
-                          : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100 text-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs">{r.label}</span>
-                        {role === r.id && <Check className="w-3.5 h-3.5 text-blue-600" />}
-                      </div>
-                    </button>
-                  ))}
+                    {
+                      id: 'counsellor' as const,
+                      label: 'Counsellor',
+                      desc: 'Candidate guidance, ticket creation & candidate register',
+                    },
+                    {
+                      id: 'supporting_staff' as const,
+                      label: 'Supporting Staff',
+                      desc: 'Verification, QR upload, visitor register & student directory',
+                    },
+                  ].map((r) => {
+                    const isSelected = role === r.id || (r.id === 'supporting_staff' && role === 'operator');
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => handleRolePreset(r.id)}
+                        className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                          isSelected
+                            ? 'border-blue-600 bg-blue-50/80 text-blue-950 font-bold ring-2 ring-blue-100 shadow-xs'
+                            : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100/80 text-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-0.5">
+                          <span className="text-xs font-bold">{r.label}</span>
+                          {isSelected && <Check className="w-4 h-4 text-blue-600" />}
+                        </div>
+                        <p className="text-[11px] text-slate-500 font-normal leading-tight">{r.desc}</p>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

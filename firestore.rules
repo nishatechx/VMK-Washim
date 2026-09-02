@@ -31,6 +31,11 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Media & profile image uploads stored in Firebase
+    match /images/{imageId} {
+      allow read, write: if true;
+    }
+
     // Fallback collection match
     match /{document=**} {
       allow read, write: if true;

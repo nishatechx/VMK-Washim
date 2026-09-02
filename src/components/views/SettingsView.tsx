@@ -8,7 +8,7 @@ interface SettingsViewProps {
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ currentUser, onNavigateToUsers }) => {
-  const [centerName, setCenterName] = useState('VMK Washim (विद्यार्थी मार्गदर्शन केंद्र)');
+  const [centerName, setCenterName] = useState('VMK Washim');
   const [centerCode, setCenterCode] = useState('VMK-WSM-01');
   const [nodalOfficer, setNodalOfficer] = useState('Mr. Shrinath Ghodake (DNO)');
   const [contactNumber, setContactNumber] = useState('+91 98220 00000');

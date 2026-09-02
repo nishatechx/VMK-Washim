@@ -2,9 +2,6 @@ export type TabPermission =
   | 'dashboard'
   | 'visitors'
   | 'students'
-  | 'counselling'
-  | 'reports'
-  | 'notifications'
   | 'settings'
   | 'profile'
   | 'user_management'
@@ -18,13 +15,15 @@ export type FeaturePermission =
   | 'add_visitor'
   | 'export_reports';
 
+export type UserRole = 'dno' | 'counsellor' | 'supporting_staff' | 'operator';
+
 export interface UserProfile {
   id: string;
   username: string;
   password: string;
   fullName: string;
   designation: string;
-  role: 'dno' | 'operator' | 'counsellor' | 'custom';
+  role: UserRole;
   allowedTabs: TabPermission[];
   allowedFeatures: FeaturePermission[];
   isActive: boolean;

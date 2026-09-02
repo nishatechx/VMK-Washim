@@ -17,6 +17,31 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
+/**
+ * Recursively removes any properties with `undefined` values from objects and arrays,
+ * preventing Firestore "Unsupported field value: undefined" errors.
+ */
+export function sanitizeForFirestore<T>(obj: T): T {
+  if (obj === null || obj === undefined) {
+    return null as any;
+  }
+  if (Array.isArray(obj)) {
+    return obj
+      .filter((item) => item !== undefined)
+      .map((item) => sanitizeForFirestore(item)) as any;
+  }
+  if (typeof obj === 'object') {
+    const cleaned: Record<string, any> = {};
+    for (const [key, value] of Object.entries(obj as Record<string, any>)) {
+      if (value !== undefined) {
+        cleaned[key] = sanitizeForFirestore(value);
+      }
+    }
+    return cleaned as T;
+  }
+  return obj;
+}
+
 const USERS_STORAGE_KEY = 'vmk_user_profiles_v1';
 const CURRENT_USER_KEY = 'vmk_current_logged_user';
 const STUDENTS_STORAGE_KEY = 'vmk_students_records_v1';
@@ -35,9 +60,6 @@ export const DNO_USER: UserProfile = {
     'dashboard',
     'visitors',
     'students',
-    'counselling',
-    'reports',
-    'notifications',
     'settings',
     'profile',
     'user_management',
@@ -59,12 +81,9 @@ export const DNO_USER: UserProfile = {
 
 // Available system tabs with display labels and icons
 export const AVAILABLE_TABS: { id: TabPermission; label: string; description: string }[] = [
-  { id: 'dashboard', label: 'Dashboard', description: 'Core tools access & live verification activity' },
+  { id: 'dashboard', label: 'Dashboard', description: 'Core tools access & verification activity' },
   { id: 'visitors', label: 'Visitors Entry Register', description: 'Record visitor entry form, check-in/out & directory' },
   { id: 'students', label: 'Students Directory', description: 'Candidate registration, records & scrutiny status' },
-  { id: 'counselling', label: 'Counselling Desk', description: 'Guidance rules, category validity & checklists' },
-  { id: 'reports', label: 'Reports & Analytics', description: 'Scrutiny statistics, discrepancy tally & CSV export' },
-  { id: 'notifications', label: 'Notifications', description: 'CET Cell notices, alerts & announcements' },
   { id: 'settings', label: 'Center Settings', description: 'Center identity, DNO details & preferences' },
   { id: 'profile', label: 'Operator Profile', description: 'Account details and session information' },
   { id: 'user_management', label: 'User Management (DNO)', description: 'Create & manage staff profiles and rule permissions' },
@@ -74,11 +93,35 @@ export const AVAILABLE_TABS: { id: TabPermission; label: string; description: st
 export const AVAILABLE_FEATURES: { id: FeaturePermission; label: string; description: string }[] = [
   { id: 'whatsapp_tool', label: 'WhatsApp Ticket Tool', description: 'Direct WhatsApp notice generator & dispatch' },
   { id: 'qr_upload_tool', label: 'Upload by QR Code', description: 'Instant camera sync for candidate document uploads' },
-  { id: 'ticket_generator_tool', label: 'Objection Memo Generator', description: 'Official discrepancy ticket generation' },
+  { id: 'ticket_generator_tool', label: 'Candidate Ticket Generator', description: 'Official CET/CAP candidate query & grievance ticket generation' },
   { id: 'add_candidate', label: 'Add New Candidates', description: 'Ability to register and input candidate details' },
   { id: 'add_visitor', label: 'Add Visitor Entry', description: 'Ability to log new visitor check-in and check-out' },
   { id: 'export_reports', label: 'Export Data & Reports', description: 'Download CSV and print scrutiny logs' },
 ];
+
+/**
+ * Check whether a user is authorized to access a given portal tab
+ */
+export function hasTabPermission(user: UserProfile | null | undefined, tab: TabPermission): boolean {
+  if (!user) return false;
+  const isDno = user.role === 'dno' || user.username.toLowerCase() === 'dno';
+  if (tab === 'google_sheets' || tab === 'user_management') {
+    if (!isDno) return false;
+  }
+  return Array.isArray(user.allowedTabs) ? user.allowedTabs.includes(tab) : false;
+}
+
+/**
+ * Check whether a user has been granted a specific interactive tool/feature permission
+ */
+export function hasFeaturePermission(user: UserProfile | null | undefined, feature: FeaturePermission): boolean {
+  if (!user) return false;
+  if (Array.isArray(user.allowedFeatures)) {
+    return user.allowedFeatures.includes(feature);
+  }
+  // Fallback for root DNO
+  return user.role === 'dno' || user.username.toLowerCase() === 'dno';
+}
 
 // In-memory subscribers
 const userSubscribers: ((users: UserProfile[]) => void)[] = [];
@@ -164,7 +207,7 @@ export function initFirestoreDataSync() {
           if (!hasDno) {
             firestoreUsers.unshift(DNO_USER);
             // Also write DNO to Firestore for consistency
-            setDoc(doc(db, 'users', DNO_USER.id), DNO_USER, { merge: true }).catch(() => {});
+            setDoc(doc(db, 'users', DNO_USER.id), sanitizeForFirestore(DNO_USER), { merge: true }).catch(() => {});
           }
 
           localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(firestoreUsers));
@@ -180,7 +223,7 @@ export function initFirestoreDataSync() {
           }
         } else {
           // If Firestore users collection is currently empty, seed master DNO
-          setDoc(doc(db, 'users', DNO_USER.id), DNO_USER, { merge: true }).catch(() => {});
+          setDoc(doc(db, 'users', DNO_USER.id), sanitizeForFirestore(DNO_USER), { merge: true }).catch(() => {});
         }
       },
       (err) => {
@@ -265,7 +308,7 @@ export function saveUser(user: UserProfile): { success: boolean; message: string
     notifyUserSubscribers(users);
 
     // Save directly to Firestore cloud database so any device on Netlify/Cloud can log in
-    setDoc(doc(db, 'users', user.id), user, { merge: true }).catch((e) => {
+    setDoc(doc(db, 'users', user.id), sanitizeForFirestore(user), { merge: true }).catch((e) => {
       console.warn('Firestore saveUser background sync notice:', e?.message);
     });
 
@@ -447,7 +490,7 @@ export function saveStudentRecord(record: StudentRecord): void {
     studentSubscribers.forEach((cb) => cb(records));
 
     // Cloud sync
-    setDoc(doc(db, 'students', record.id), record, { merge: true }).catch((e) => {
+    setDoc(doc(db, 'students', record.id), sanitizeForFirestore(record), { merge: true }).catch((e) => {
       console.warn('Firestore saveStudent sync error:', e?.message);
     });
   } catch (err) {
@@ -508,7 +551,7 @@ export function saveCenterNotice(notice: CenterNotice): void {
     noticeSubscribers.forEach((cb) => cb(notices));
 
     // Cloud sync
-    setDoc(doc(db, 'notices', notice.id), notice, { merge: true }).catch((e) => {
+    setDoc(doc(db, 'notices', notice.id), sanitizeForFirestore(notice), { merge: true }).catch((e) => {
       console.warn('Firestore saveNotice sync error:', e?.message);
     });
   } catch (err) {
@@ -569,7 +612,7 @@ export function saveVisitorRecord(record: VisitorRecord): void {
     visitorSubscribers.forEach((cb) => cb(records));
 
     // Cloud sync
-    setDoc(doc(db, 'visitors', record.id), record, { merge: true }).catch((e) => {
+    setDoc(doc(db, 'visitors', record.id), sanitizeForFirestore(record), { merge: true }).catch((e) => {
       console.warn('Firestore saveVisitor sync error:', e?.message);
     });
   } catch (err) {
@@ -611,7 +654,7 @@ export function checkoutVisitor(id: string, checkOutTime?: string): void {
       visitorSubscribers.forEach((cb) => cb(records));
 
       // Cloud sync
-      setDoc(doc(db, 'visitors', id), records[idx], { merge: true }).catch((e) => {
+      setDoc(doc(db, 'visitors', id), sanitizeForFirestore(records[idx]), { merge: true }).catch((e) => {
         console.warn('Firestore checkoutVisitor sync error:', e?.message);
       });
     }

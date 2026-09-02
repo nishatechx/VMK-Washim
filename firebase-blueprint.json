@@ -72,6 +72,18 @@
         "createdAt": { "type": "string", "description": "Timestamp" },
         "status": { "type": "string", "description": "Ticket status" }
       }
+    },
+    "images": {
+      "title": "Uploaded Media & Avatars",
+      "description": "User profile pictures and images stored directly in Firebase",
+      "fields": {
+        "name": { "type": "string", "description": "Image file name" },
+        "dataUrl": { "type": "string", "description": "Base64 data URL" },
+        "mimeType": { "type": "string", "description": "Image MIME type" },
+        "sizeBytes": { "type": "number", "description": "File size in bytes" },
+        "uploadedAt": { "type": "string", "description": "ISO timestamp" },
+        "uploadedBy": { "type": "string", "description": "Uploader identifier" }
+      }
     }
   }
 }

@@ -98,7 +98,7 @@ export function printDocumentDirectly(dataUrl: string, fileName: string, isImage
           <!DOCTYPE html>
           <html>
             <head>
-              <title>${fileName} - VMK Washim In-Software Print</title>
+              <title>${fileName} - In-Software Print</title>
               <style>
                 @page { margin: 10mm; size: auto; }
                 body { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; }
@@ -107,7 +107,7 @@ export function printDocumentDirectly(dataUrl: string, fileName: string, isImage
               </style>
             </head>
             <body>
-              <div class="header">Government Polytechnic, Washim • In-Software Candidate Document: ${fileName}</div>
+              <div class="header">In-Software Candidate Document: ${fileName}</div>
               <img src="${dataUrl}" onload="window.print();" />
             </body>
           </html>

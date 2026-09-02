@@ -280,7 +280,7 @@ export const visitorToRow = (v: VisitorRecord): (string | number)[] => {
 
 // Create a new styled Google Spreadsheet for Visitors
 export const createVisitorsSpreadsheet = async (
-  title = 'VMK Washim - Visitors Entry Register 2026'
+  title = 'Visitors Entry Register'
 ): Promise<{ spreadsheetId: string; spreadsheetUrl: string; sheetName: string }> => {
   const token = cachedAccessToken;
   if (!token) {

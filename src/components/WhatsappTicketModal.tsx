@@ -187,99 +187,54 @@ ${form.query.trim()}`;
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-md overflow-y-auto"
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-[#001D3D]/70 backdrop-blur-xs overflow-y-auto"
           onClick={onClose}
         >
           <motion.div
             id="whatsapp-ticket-modal-container"
-            initial={{
-              clipPath: 'inset(0% 0% 100% 0% round 16px)',
-              opacity: 0.3,
-              y: -15,
-            }}
-            animate={{
-              clipPath: 'inset(0% 0% 0% 0% round 16px)',
-              opacity: 1,
-              y: 0,
-            }}
-            exit={{
-              clipPath: 'inset(100% 0% 0% 0% round 16px)',
-              opacity: 0.2,
-              y: 15,
-            }}
-            transition={{
-              duration: 0.38,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            className="relative w-full max-w-2xl bg-[#09261b] text-white rounded-2xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8),0_0_30px_rgba(37,211,102,0.3)] border border-emerald-500/40 overflow-hidden my-auto max-h-[92vh] flex flex-col origin-top"
+            initial={{ opacity: 0, scale: 0.96, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 10 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="relative w-full max-w-2xl bg-[#F7F9FC] text-[#1F2937] rounded-2xl shadow-2xl border border-[#D9E1EA] overflow-hidden my-auto max-h-[92vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Mac Window Header with Emerald WhatsApp Gradient */}
-            <div className="bg-gradient-to-r from-[#063323] via-[#0b4d35] to-[#128c7e] px-4 sm:px-5 py-3.5 border-b border-emerald-500/30 flex items-center justify-between shrink-0 select-none">
+            {/* Website-Themed Navy Header */}
+            <div className="bg-[#003B73] text-white px-5 sm:px-6 py-4 border-b border-[#002850] flex items-center justify-between shrink-0 select-none">
               <div className="flex items-center gap-3">
-                {/* Mac Traffic Light Controls */}
-                <div className="flex items-center gap-2 group/traffic">
-                  <button
-                    id="mac-wa-close-btn"
-                    onClick={onClose}
-                    className="w-3.5 h-3.5 rounded-full bg-[#ff5f56] border border-[#e0443e] hover:bg-[#ff3b30] flex items-center justify-center shadow-sm transition-transform active:scale-90 cursor-pointer"
-                    title="Close (Esc)"
-                  >
-                    <X className="w-2 h-2 text-[#4c0000] opacity-0 group-hover/traffic:opacity-100 transition-opacity" />
-                  </button>
-
-                  <button
-                    id="mac-wa-minimize-btn"
-                    onClick={onClose}
-                    className="w-3.5 h-3.5 rounded-full bg-[#ffbd2e] border border-[#dea123] hover:bg-[#f59e0b] flex items-center justify-center shadow-sm transition-transform active:scale-90 cursor-pointer"
-                    title="Minimize"
-                  >
-                    <Minus className="w-2 h-2 text-[#5c3e00] opacity-0 group-hover/traffic:opacity-100 transition-opacity" />
-                  </button>
-
-                  <button
-                    id="mac-wa-zoom-btn"
-                    className="w-3.5 h-3.5 rounded-full bg-[#27c93f] border border-[#1aab29] hover:bg-[#10b981] flex items-center justify-center shadow-sm transition-transform active:scale-90 cursor-pointer"
-                    title="Active"
-                  >
-                    <Plus className="w-2 h-2 text-[#004d10] opacity-0 group-hover/traffic:opacity-100 transition-opacity" />
-                  </button>
+                <div className="w-10 h-10 rounded-xl bg-[#0056A6] flex items-center justify-center text-white shadow-xs border border-white/20">
+                  <MessageCircle className="w-5 h-5 text-white" />
                 </div>
-
-                <div className="h-4 w-px bg-emerald-400/30 hidden sm:block ml-1" />
-
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center shadow-md text-white">
-                    <MessageCircle className="w-4 h-4 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-white tracking-wide leading-tight">
-                      WhatsApp Ticket
-                    </h2>
-                  </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-white tracking-wide leading-tight">
+                    WhatsApp Notice Dispatcher
+                  </h2>
+                  <p className="text-xs text-blue-100">
+                    Format and send candidate verification notices via WhatsApp
+                  </p>
                 </div>
               </div>
 
               <button
                 id="close-wa-ticket-modal"
                 onClick={onClose}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-emerald-100 hover:text-white transition-colors"
+                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
                 title="Close (Esc)"
               >
-                <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Scrollable Form Body */}
-            <div className="p-4 sm:p-6 overflow-y-auto space-y-4 text-slate-900 bg-[#f0fdf4]">
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-4 text-[#1F2937] bg-[#F7F9FC]">
               {/* Status Notice */}
               {statusMessage.text && (
                 <div
                   className={`p-3 rounded-xl flex items-start gap-2.5 text-xs sm:text-sm font-medium ${
                     statusMessage.type === 'error'
                       ? 'bg-red-50 text-red-800 border border-red-200'
-                      : 'bg-emerald-100/90 text-emerald-900 border border-emerald-300'
+                      : 'bg-emerald-50 text-emerald-900 border border-emerald-200'
                   }`}
                 >
                   {statusMessage.type === 'error' ? (
@@ -293,16 +248,16 @@ ${form.query.trim()}`;
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Form Fields Card */}
-                <div className="bg-white p-4 sm:p-5 rounded-xl border border-emerald-100 shadow-sm space-y-4">
-                  <h3 className="text-xs font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-2 border-b border-emerald-50 pb-2">
-                    <FileCheck className="w-4 h-4 text-emerald-600" />
+                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#D9E1EA] shadow-xs space-y-4">
+                  <h3 className="text-xs font-bold text-[#003B73] uppercase tracking-wider flex items-center gap-2 border-b border-[#D9E1EA] pb-2.5">
+                    <FileCheck className="w-4 h-4 text-[#0056A6]" />
                     Candidate & Application Information
                   </h3>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     {/* Name */}
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                      <label className="block text-xs font-bold text-[#374151] mb-1">
                         Name: <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -311,17 +266,17 @@ ${form.query.trim()}`;
                         value={form.name}
                         onChange={handleChange}
                         placeholder="e.g. Rahul Ashok Sharma"
-                        className={`w-full px-3 py-2 text-sm rounded-lg border bg-white focus:outline-none transition-all ${
+                        className={`w-full px-3 py-2 text-sm rounded-xl border bg-white focus:outline-none transition-all ${
                           errors.name
                             ? 'border-red-500 focus:ring-2 focus:ring-red-200'
-                            : 'border-slate-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100'
+                            : 'border-[#D9E1EA] focus:border-[#0056A6] focus:ring-2 focus:ring-[#0056A6]/20'
                         }`}
                       />
                     </div>
 
                     {/* Mobile Number */}
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                      <label className="block text-xs font-bold text-[#374151] mb-1">
                         Mobile Number: <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -330,17 +285,17 @@ ${form.query.trim()}`;
                         value={form.mobile}
                         onChange={handleChange}
                         placeholder="e.g. 9876543210"
-                        className={`w-full px-3 py-2 text-sm rounded-lg border bg-white focus:outline-none transition-all ${
+                        className={`w-full px-3 py-2 text-sm rounded-xl border bg-white focus:outline-none transition-all ${
                           errors.mobile
                             ? 'border-red-500 focus:ring-2 focus:ring-red-200'
-                            : 'border-slate-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100'
+                            : 'border-[#D9E1EA] focus:border-[#0056A6] focus:ring-2 focus:ring-[#0056A6]/20'
                         }`}
                       />
                     </div>
 
                     {/* Email */}
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                      <label className="block text-xs font-bold text-[#374151] mb-1">
                         Email:
                       </label>
                       <input
@@ -349,13 +304,13 @@ ${form.query.trim()}`;
                         value={form.email}
                         onChange={handleChange}
                         placeholder="e.g. candidate@example.com"
-                        className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all"
+                        className="w-full px-3 py-2 text-sm rounded-xl border border-[#D9E1EA] bg-white focus:border-[#0056A6] focus:ring-2 focus:ring-[#0056A6]/20 focus:outline-none transition-all"
                       />
                     </div>
 
                     {/* CET Registration No. */}
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                      <label className="block text-xs font-bold text-[#374151] mb-1">
                         CET Registration No.:
                       </label>
                       <input
@@ -364,13 +319,13 @@ ${form.query.trim()}`;
                         value={form.cetRegNo}
                         onChange={handleChange}
                         placeholder="e.g. 2410293847"
-                        className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all font-mono"
+                        className="w-full px-3 py-2 text-sm rounded-xl border border-[#D9E1EA] bg-white focus:border-[#0056A6] focus:ring-2 focus:ring-[#0056A6]/20 focus:outline-none transition-all font-mono"
                       />
                     </div>
 
                     {/* CAP Application No. */}
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                      <label className="block text-xs font-bold text-[#374151] mb-1">
                         CAP Application No.:
                       </label>
                       <input
@@ -379,13 +334,13 @@ ${form.query.trim()}`;
                         value={form.capAppNo}
                         onChange={handleChange}
                         placeholder="e.g. EN24104928"
-                        className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all font-mono uppercase"
+                        className="w-full px-3 py-2 text-sm rounded-xl border border-[#D9E1EA] bg-white focus:border-[#0056A6] focus:ring-2 focus:ring-[#0056A6]/20 focus:outline-none transition-all font-mono uppercase"
                       />
                     </div>
 
                     {/* Course Name */}
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                      <label className="block text-xs font-bold text-[#374151] mb-1">
                         Course Name: <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -394,10 +349,10 @@ ${form.query.trim()}`;
                         value={form.courseName}
                         onChange={handleChange}
                         placeholder="e.g. First Year Engineering (B.Tech / B.E.)"
-                        className={`w-full px-3 py-2 text-sm rounded-lg border bg-white focus:outline-none transition-all ${
+                        className={`w-full px-3 py-2 text-sm rounded-xl border bg-white focus:outline-none transition-all ${
                           errors.courseName
                             ? 'border-red-500 focus:ring-2 focus:ring-red-200'
-                            : 'border-slate-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100'
+                            : 'border-[#D9E1EA] focus:border-[#0056A6] focus:ring-2 focus:ring-[#0056A6]/20'
                         }`}
                       />
                     </div>
@@ -405,17 +360,17 @@ ${form.query.trim()}`;
 
                   {/* Scrutiny Mode (e scrutiny mode / physical) */}
                   <div className="pt-1">
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    <label className="block text-xs font-bold text-[#374151] mb-1.5">
                       Scrutiny Mode:
                     </label>
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         type="button"
                         onClick={() => handleScrutinySelect('E-Scrutiny Mode')}
-                        className={`py-2 px-3 rounded-lg border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                        className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
                           form.scrutinyMode === 'E-Scrutiny Mode'
-                            ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm ring-2 ring-emerald-200'
-                            : 'bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100'
+                            ? 'bg-[#0056A6] text-white border-[#003B73] shadow-xs'
+                            : 'bg-white text-[#4B5563] border-[#D9E1EA] hover:bg-[#F7F9FC]'
                         }`}
                       >
                         <span className="w-2 h-2 rounded-full bg-current"></span>
@@ -425,10 +380,10 @@ ${form.query.trim()}`;
                       <button
                         type="button"
                         onClick={() => handleScrutinySelect('Physical Scrutiny Mode')}
-                        className={`py-2 px-3 rounded-lg border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                        className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
                           form.scrutinyMode === 'Physical Scrutiny Mode'
-                            ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm ring-2 ring-emerald-200'
-                            : 'bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100'
+                            ? 'bg-[#0056A6] text-white border-[#003B73] shadow-xs'
+                            : 'bg-white text-[#4B5563] border-[#D9E1EA] hover:bg-[#F7F9FC]'
                         }`}
                       >
                         <span className="w-2 h-2 rounded-full bg-current"></span>
@@ -440,15 +395,15 @@ ${form.query.trim()}`;
                   {/* Ticket No */}
                   <div className="pt-1">
                     <div className="flex items-center justify-between mb-1">
-                      <label className="text-xs font-bold text-slate-700">
+                      <label className="text-xs font-bold text-[#374151]">
                         Ticket No - :
                       </label>
                       <button
                         type="button"
                         onClick={generateTicketNumber}
-                        className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 flex items-center gap-1 cursor-pointer"
+                        className="text-[11px] font-semibold text-[#0056A6] hover:text-[#003B73] flex items-center gap-1 cursor-pointer"
                       >
-                        <Sparkles className="w-3 h-3 text-emerald-600" />
+                        <Sparkles className="w-3 h-3 text-[#0056A6]" />
                         Auto-generate Ticket ID
                       </button>
                     </div>
@@ -458,13 +413,13 @@ ${form.query.trim()}`;
                       value={form.ticketNo}
                       onChange={handleChange}
                       placeholder="e.g. WA-CAP-2026-894210 (or leave empty to auto-assign)"
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 bg-white focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 focus:outline-none transition-all font-mono"
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-[#D9E1EA] bg-white focus:border-[#0056A6] focus:ring-2 focus:ring-[#0056A6]/20 focus:outline-none transition-all font-mono"
                     />
                   </div>
 
                   {/* Query */}
                   <div className="pt-1">
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <label className="block text-xs font-bold text-[#374151] mb-1">
                       Query - : <span className="text-red-500">*</span>
                     </label>
 
@@ -481,7 +436,7 @@ ${form.query.trim()}`;
                           key={preset}
                           type="button"
                           onClick={() => handleQuickQuery(preset)}
-                          className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-colors cursor-pointer"
+                          className="text-[11px] px-2.5 py-1 rounded-lg bg-[#EAF4FB] text-[#0056A6] border border-[#D9E1EA] hover:bg-[#dbebf9] transition-colors cursor-pointer"
                         >
                           + {preset}
                         </button>
@@ -494,10 +449,10 @@ ${form.query.trim()}`;
                       value={form.query}
                       onChange={handleChange}
                       placeholder="Describe candidate query / discrepancy in detail..."
-                      className={`w-full px-3 py-2 text-sm rounded-lg border bg-white focus:outline-none transition-all ${
+                      className={`w-full px-3 py-2 text-sm rounded-xl border bg-white focus:outline-none transition-all ${
                         errors.query
                           ? 'border-red-500 focus:ring-2 focus:ring-red-200'
-                          : 'border-slate-300 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100'
+                          : 'border-[#D9E1EA] focus:border-[#0056A6] focus:ring-2 focus:ring-[#0056A6]/20'
                       }`}
                     />
                   </div>
@@ -508,7 +463,7 @@ ${form.query.trim()}`;
                   <button
                     type="button"
                     onClick={handleReset}
-                    className="px-3.5 py-2 text-xs font-semibold rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className="px-4 py-2 text-xs font-bold rounded-xl bg-white hover:bg-[#F7F9FC] text-[#4B5563] border border-[#D9E1EA] flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     Reset
@@ -517,10 +472,10 @@ ${form.query.trim()}`;
                   <button
                     type="submit"
                     id="generate-whatsapp-ticket-btn"
-                    className="px-5 py-2.5 text-xs sm:text-sm font-bold rounded-lg bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white shadow-md hover:shadow-lg flex items-center gap-2 transition-all transform active:scale-98 cursor-pointer"
+                    className="px-5 py-2.5 text-xs sm:text-sm font-bold rounded-xl bg-[#0056A6] hover:bg-[#003B73] text-white shadow-xs flex items-center gap-2 transition-all active:scale-98 cursor-pointer"
                   >
-                    <Sparkles className="w-4 h-4 text-emerald-200" />
-                    Submit & Generate WhatsApp Ticket
+                    <Sparkles className="w-4 h-4 text-blue-200" />
+                    Generate WhatsApp Notice
                   </button>
                 </div>
               </form>
@@ -529,13 +484,13 @@ ${form.query.trim()}`;
               {output && (
                 <div
                   id="whatsapp-output-card"
-                  className="bg-white p-4 sm:p-5 rounded-xl border-2 border-emerald-400 shadow-md space-y-3 animate-in fade-in zoom-in-95 duration-200"
+                  className="bg-white p-4 sm:p-5 rounded-2xl border border-[#198754]/30 shadow-sm space-y-3 animate-in fade-in zoom-in-95 duration-200"
                 >
-                  <div className="flex items-center justify-between flex-wrap gap-2 border-b border-emerald-100 pb-2">
+                  <div className="flex items-center justify-between flex-wrap gap-2 border-b border-[#D9E1EA] pb-2.5">
                     <div className="flex items-center gap-2">
-                      <MessageCircle className="w-5 h-5 text-[#25d366]" />
-                      <span className="text-xs sm:text-sm font-extrabold text-emerald-950">
-                        Copyable Data for WhatsApp (*Bold Headings Ready*)
+                      <MessageCircle className="w-5 h-5 text-[#198754]" />
+                      <span className="text-xs sm:text-sm font-bold text-[#1F2937]">
+                        Formatted WhatsApp Notice
                       </span>
                     </div>
 
@@ -545,7 +500,7 @@ ${form.query.trim()}`;
                         type="button"
                         id="open-whatsapp-intent-btn"
                         onClick={handleDirectWhatsApp}
-                        className="px-3 py-1.5 rounded-lg bg-[#25d366] hover:bg-[#20bd5a] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                        className="px-3 py-1.5 rounded-xl bg-[#198754] hover:bg-[#146c43] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
                         title="Send via WhatsApp"
                       >
                         <Send className="w-3.5 h-3.5" />
@@ -557,10 +512,10 @@ ${form.query.trim()}`;
                         type="button"
                         id="copy-whatsapp-ticket-btn"
                         onClick={handleCopy}
-                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
                           copied
-                            ? 'bg-emerald-700 text-white shadow-inner'
-                            : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
+                            ? 'bg-[#198754] text-white shadow-inner'
+                            : 'bg-[#0056A6] hover:bg-[#003B73] text-white shadow-xs'
                         }`}
                       >
                         {copied ? (
@@ -571,7 +526,7 @@ ${form.query.trim()}`;
                         ) : (
                           <>
                             <Copy className="w-3.5 h-3.5" />
-                            Copy for WhatsApp
+                            Copy Text
                           </>
                         )}
                       </button>
@@ -580,24 +535,24 @@ ${form.query.trim()}`;
 
                   {/* WhatsApp Formatted Message Box */}
                   <div className="relative">
-                    <pre className="p-3.5 bg-[#e5ddd5]/30 rounded-lg text-xs font-mono text-slate-900 whitespace-pre-wrap leading-relaxed border border-emerald-200 selection:bg-emerald-300">
+                    <pre className="p-3.5 bg-[#F7F9FC] rounded-xl text-xs font-mono text-[#1F2937] whitespace-pre-wrap leading-relaxed border border-[#D9E1EA]">
                       {output}
                     </pre>
                   </div>
 
-                  <p className="text-[11px] text-slate-500 italic">
-                    💡 Tip: The <code className="text-emerald-800 font-bold">*</code> markers around headers will automatically display in <b>bold</b> text when posted inside WhatsApp.
+                  <p className="text-[11px] text-[#6B7280]">
+                    The <code className="text-[#0056A6] font-bold">*</code> markers around headers automatically format to bold text inside WhatsApp.
                   </p>
                 </div>
               )}
             </div>
 
             {/* Modal Bottom Footer */}
-            <div className="bg-[#063323] px-4 py-2.5 border-t border-emerald-500/20 flex items-center justify-between text-xs text-emerald-200/80">
-              <span className="text-[11px] font-mono">DNO E-Scrutiny Center • Washim</span>
+            <div className="bg-white px-5 py-3 border-t border-[#D9E1EA] flex items-center justify-between text-xs text-[#6B7280]">
+              <span className="text-[11px]">Candidate Verification & Notice Desk</span>
               <button
                 onClick={onClose}
-                className="px-3 py-1 rounded bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition-colors cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl bg-[#F7F9FC] hover:bg-[#EAF4FB] text-[#003B73] border border-[#D9E1EA] text-xs font-bold transition-colors cursor-pointer"
               >
                 Close
               </button>

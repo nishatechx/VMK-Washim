@@ -125,7 +125,7 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
         : {
             spreadsheetId: '',
             spreadsheetUrl: '',
-            spreadsheetTitle: 'VMK Washim - Visitors Entry Register 2026',
+            spreadsheetTitle: 'Visitors Entry Register',
             sheetName: 'Visitors_Register',
             autoSync: true,
             userEmail: email,
@@ -191,7 +191,7 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
       : {
           spreadsheetId: '',
           spreadsheetUrl: '',
-          spreadsheetTitle: 'VMK Washim - Visitors Entry Register 2026',
+          spreadsheetTitle: 'Visitors Entry Register',
           sheetName: 'Visitors_Register',
           autoSync: true,
           userEmail: 'Authorized Token User',
@@ -248,7 +248,7 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `VMK_Visitors_Register_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `Visitors_Register_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -285,7 +285,7 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
     setIsCreatingSheet(true);
     setFeedback({ message: '', type: '' });
     try {
-      const title = `VMK Washim - Visitors Entry Register ${new Date().getFullYear()}`;
+      const title = `Visitors Entry Register ${new Date().getFullYear()}`;
       const result = await createVisitorsSpreadsheet(title);
 
       const newConfig: GoogleSheetsConfig = {
@@ -452,7 +452,7 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/70 backdrop-blur-sm overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-[#001D3D]/70 backdrop-blur-xs overflow-y-auto"
           onClick={onClose}
         >
           <motion.div
@@ -461,24 +461,24 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-2xl bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto flex flex-col"
+            className="relative w-full max-w-2xl bg-[#F7F9FC] text-[#1F2937] rounded-2xl shadow-2xl border border-[#D9E1EA] overflow-hidden my-auto flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="bg-slate-900 text-white px-6 py-4 border-b border-slate-800 flex items-center justify-between shrink-0">
+            <div className="bg-[#003B73] text-white px-6 py-4 border-b border-[#002850] flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-xs">
+                <div className="w-10 h-10 rounded-xl bg-[#0056A6] flex items-center justify-center text-white shadow-xs border border-white/20">
                   <FileSpreadsheet className="w-5 h-5" />
                 </div>
                 <div>
                   <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
                     <span>Google Sheets Live Sync</span>
-                    <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-200 border border-emerald-400/30">
                       Auto-Save
                     </span>
                   </h2>
-                  <p className="text-xs text-slate-300">
-                    Store and synchronize VMK Washim Visitor Entry logs directly to your Google Spreadsheet
+                  <p className="text-xs text-blue-100">
+                    Store and synchronize Visitor Entry logs directly to your Google Spreadsheet
                   </p>
                 </div>
               </div>
@@ -486,7 +486,7 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
               <button
                 id="close-sheets-modal"
                 onClick={onClose}
-                className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
                 title="Close"
               >
                 <X className="w-5 h-5" />
@@ -847,7 +847,7 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
                           </span>
                           <h4 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2 mt-0.5">
                             <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-                            <span>{config.spreadsheetTitle || 'VMK Washim - Visitors Entry Register'}</span>
+                            <span>{config.spreadsheetTitle || 'Visitors Entry Register'}</span>
                           </h4>
                         </div>
 
@@ -989,7 +989,7 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
                             </div>
                             <h4 className="text-sm font-bold text-slate-900">Create New Google Sheet</h4>
                             <p className="text-xs text-slate-500 leading-relaxed">
-                              Creates a formatted <b>"VMK Washim - Visitors Entry Register"</b> sheet in your Google Drive with frozen header columns.
+                              Creates a formatted <b>"Visitors Entry Register"</b> sheet in your Google Drive with frozen header columns.
                             </p>
                           </div>
 
@@ -1067,11 +1067,11 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
               {/* Data Schema Columns Preview */}
               <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
-                    <Database className="w-3.5 h-3.5 text-slate-600" />
+                  <h4 className="text-xs font-bold text-[#003B73] uppercase tracking-wide flex items-center gap-1.5">
+                    <Database className="w-3.5 h-3.5 text-[#0056A6]" />
                     <span>Included Visitor Register Columns (14 Fields)</span>
                   </h4>
-                  <span className="text-[11px] font-mono text-slate-500 font-semibold">Standard VMK Schema</span>
+                  <span className="text-[11px] font-mono text-[#6B7280] font-semibold">Standard Register Schema</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {[
@@ -1102,14 +1102,14 @@ export const GoogleSheetsSyncModal: React.FC<GoogleSheetsSyncModalProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="bg-slate-50 px-6 py-3.5 border-t border-slate-200 flex items-center justify-between shrink-0">
-              <span className="text-xs text-slate-500 flex items-center gap-1.5">
+            <div className="bg-[#F7F9FC] px-6 py-3.5 border-t border-[#D9E1EA] flex items-center justify-between shrink-0">
+              <span className="text-xs text-[#6B7280] flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
                 <span>Encrypted OAuth token stored securely in memory</span>
               </span>
               <button
                 onClick={onClose}
-                className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm transition-colors cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-[#003B73] hover:bg-[#002850] text-white font-bold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
               >
                 Done / Close
               </button>

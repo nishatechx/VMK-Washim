@@ -165,7 +165,7 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({ currentUser 
         : {
             spreadsheetId: '',
             spreadsheetUrl: '',
-            spreadsheetTitle: 'VMK Washim - Visitors Entry Register 2026',
+            spreadsheetTitle: 'Visitors Entry Register',
             sheetName: 'Visitors_Register',
             autoSync: true,
             userEmail: email,
@@ -229,7 +229,7 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({ currentUser 
       : {
           spreadsheetId: '',
           spreadsheetUrl: '',
-          spreadsheetTitle: 'VMK Washim - Visitors Entry Register 2026',
+          spreadsheetTitle: 'Visitors Entry Register',
           sheetName: 'Visitors_Register',
           autoSync: true,
           userEmail: 'Authorized Token User',
@@ -261,12 +261,12 @@ export const GoogleSheetsView: React.FC<GoogleSheetsViewProps> = ({ currentUser 
     try {
       const currentList = getVisitorRecords();
       const newSheet = await createVisitorsSpreadsheet(
-        'VMK Washim - Visitors Entry Register 2026'
+        'Visitors Entry Register'
       );
       const conf: GoogleSheetsConfig = {
         spreadsheetId: newSheet.spreadsheetId,
         spreadsheetUrl: newSheet.spreadsheetUrl,
-        spreadsheetTitle: 'VMK Washim - Visitors Entry Register 2026',
+        spreadsheetTitle: 'Visitors Entry Register',
         sheetName: newSheet.sheetName,
         autoSync: true,
         userEmail: userEmail || 'Google User',
