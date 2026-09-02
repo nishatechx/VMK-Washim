@@ -12,7 +12,7 @@ import { GoogleSheetsView } from './components/views/GoogleSheetsView';
 import { TicketsView } from './components/views/TicketsView';
 
 import { TicketGeneratorModal } from './components/TicketGeneratorModal';
-import { WhatsappTicketModal } from './components/WhatsappTicketModal';
+import { WhatsappTicketModal, WhatsappInitialData } from './components/WhatsappTicketModal';
 import { QrUploadModal } from './components/QrUploadModal';
 import { MobileQrUploadView } from './components/MobileQrUploadView';
 import { LoginScreen } from './components/LoginScreen';
@@ -37,7 +37,18 @@ export default function App() {
   // Modals for the 3 Core Functional Tools
   const [isTicketGeneratorOpen, setIsTicketGeneratorOpen] = useState<boolean>(false);
   const [isWhatsappTicketOpen, setIsWhatsappTicketOpen] = useState<boolean>(false);
+  const [whatsappInitialData, setWhatsappInitialData] = useState<WhatsappInitialData | null>(null);
   const [isQrUploadModalOpen, setIsQrUploadModalOpen] = useState<boolean>(false);
+
+  const handleOpenWhatsappWithData = (data: WhatsappInitialData) => {
+    setWhatsappInitialData(data);
+    setIsWhatsappTicketOpen(true);
+  };
+
+  const handleOpenWhatsappGeneral = () => {
+    setWhatsappInitialData(null);
+    setIsWhatsappTicketOpen(true);
+  };
 
   const [qrSessionParam, setQrSessionParam] = useState<string | null>(null);
 
@@ -176,7 +187,7 @@ export default function App() {
             <div className="relative z-10 w-full max-w-6xl mx-auto flex-1">
               {activeTab === 'dashboard' && hasTabPermission(currentUser, 'dashboard') && (
                 <DashboardView
-                  onOpenWhatsappTool={() => setIsWhatsappTicketOpen(true)}
+                  onOpenWhatsappTool={handleOpenWhatsappGeneral}
                   onOpenQrTool={() => setIsQrUploadModalOpen(true)}
                   onOpenTicketTool={() => setIsTicketGeneratorOpen(true)}
                   onNavigateTab={(tab) => setActiveTab(tab)}
@@ -195,7 +206,8 @@ export default function App() {
                 <TicketsView
                   currentUser={currentUser}
                   onOpenTicketTool={() => setIsTicketGeneratorOpen(true)}
-                  onOpenWhatsappTool={() => setIsWhatsappTicketOpen(true)}
+                  onOpenWhatsappTool={handleOpenWhatsappGeneral}
+                  onOpenWhatsappWithData={handleOpenWhatsappWithData}
                 />
               )}
 
@@ -205,7 +217,7 @@ export default function App() {
 
               {activeTab === 'students' && hasTabPermission(currentUser, 'students') && (
                 <StudentsView
-                  onOpenWhatsappTool={() => setIsWhatsappTicketOpen(true)}
+                  onOpenWhatsappTool={handleOpenWhatsappGeneral}
                   onOpenTicketTool={() => setIsTicketGeneratorOpen(true)}
                   onOpenQrTool={() => setIsQrUploadModalOpen(true)}
                   currentUser={currentUser}
@@ -255,8 +267,12 @@ export default function App() {
       {/* 3 Core Interactive Modals */}
       <WhatsappTicketModal
         isOpen={isWhatsappTicketOpen}
-        onClose={() => setIsWhatsappTicketOpen(false)}
+        onClose={() => {
+          setIsWhatsappTicketOpen(false);
+          setWhatsappInitialData(null);
+        }}
         currentUser={currentUser}
+        initialTicketData={whatsappInitialData}
       />
 
       <QrUploadModal
@@ -268,6 +284,7 @@ export default function App() {
         isOpen={isTicketGeneratorOpen}
         onClose={() => setIsTicketGeneratorOpen(false)}
         currentUser={currentUser}
+        onOpenWhatsappWithData={handleOpenWhatsappWithData}
       />
     </div>
   );

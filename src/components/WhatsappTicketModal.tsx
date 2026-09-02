@@ -9,16 +9,23 @@ import {
   Trash2,
   CheckCircle2,
   AlertCircle,
-  Minus,
-  Plus,
   MessageCircle,
-  ExternalLink,
-  Phone,
   FileCheck,
 } from 'lucide-react';
 import { UserProfile, TicketRecord } from '../types/auth';
 import { getCurrentUser } from '../services/authService';
 import { saveTicketRecord } from '../services/ticketService';
+
+export interface WhatsappInitialData {
+  name?: string;
+  mobile?: string;
+  email?: string;
+  cetRegNo?: string;
+  capAppNo?: string;
+  courseName?: string;
+  ticketNo?: string;
+  query?: string;
+}
 
 interface WhatsappFormData {
   name: string;
@@ -27,7 +34,6 @@ interface WhatsappFormData {
   cetRegNo: string;
   capAppNo: string;
   courseName: string;
-  scrutinyMode: string;
   ticketNo: string;
   query: string;
 }
@@ -36,9 +42,15 @@ interface WhatsappTicketModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentUser?: UserProfile | null;
+  initialTicketData?: WhatsappInitialData | null;
 }
 
-export const WhatsappTicketModal: React.FC<WhatsappTicketModalProps> = ({ isOpen, onClose, currentUser }) => {
+export const WhatsappTicketModal: React.FC<WhatsappTicketModalProps> = ({
+  isOpen,
+  onClose,
+  currentUser,
+  initialTicketData,
+}) => {
   const [form, setForm] = useState<WhatsappFormData>({
     name: '',
     mobile: '',
@@ -46,7 +58,6 @@ export const WhatsappTicketModal: React.FC<WhatsappTicketModalProps> = ({ isOpen
     cetRegNo: '',
     capAppNo: '',
     courseName: '',
-    scrutinyMode: 'E-Scrutiny Mode',
     ticketNo: '',
     query: '',
   });
@@ -59,6 +70,29 @@ export const WhatsappTicketModal: React.FC<WhatsappTicketModalProps> = ({ isOpen
     type: '',
   });
 
+  // Populate data when modal opens or initialTicketData changes
+  useEffect(() => {
+    if (isOpen) {
+      if (initialTicketData) {
+        setForm({
+          name: initialTicketData.name || '',
+          mobile: initialTicketData.mobile || '',
+          email: initialTicketData.email || '',
+          cetRegNo: initialTicketData.cetRegNo || '',
+          capAppNo: initialTicketData.capAppNo || '',
+          courseName: initialTicketData.courseName || '',
+          ticketNo: initialTicketData.ticketNo || '',
+          query: initialTicketData.query || '',
+        });
+      } else if (!form.ticketNo) {
+        // Auto-generate ticket id if brand new
+        const randomNum = Math.floor(100000 + Math.random() * 900000);
+        const newTicket = `WA-CAP-${new Date().getFullYear()}-${randomNum}`;
+        setForm((prev) => ({ ...prev, ticketNo: newTicket }));
+      }
+    }
+  }, [isOpen, initialTicketData]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -69,7 +103,7 @@ export const WhatsappTicketModal: React.FC<WhatsappTicketModalProps> = ({ isOpen
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Auto-generate ticket number if empty when opening or clicking button
+  // Auto-generate ticket number
   const generateTicketNumber = () => {
     const randomNum = Math.floor(100000 + Math.random() * 900000);
     const newTicket = `WA-CAP-${new Date().getFullYear()}-${randomNum}`;
@@ -83,20 +117,6 @@ export const WhatsappTicketModal: React.FC<WhatsappTicketModalProps> = ({ isOpen
     setForm((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: false }));
-    }
-  };
-
-  const handleScrutinySelect = (mode: string) => {
-    setForm((prev) => ({ ...prev, scrutinyMode: mode }));
-  };
-
-  const handleQuickQuery = (text: string) => {
-    setForm((prev) => ({
-      ...prev,
-      query: prev.query ? `${prev.query}\n- ${text}` : text,
-    }));
-    if (errors.query) {
-      setErrors((prev) => ({ ...prev, query: false }));
     }
   };
 
@@ -129,14 +149,13 @@ export const WhatsappTicketModal: React.FC<WhatsappTicketModalProps> = ({ isOpen
       setForm((prev) => ({ ...prev, ticketNo: assignedTicket }));
     }
 
-    // Bold formatting for WhatsApp (*Heading:*)
+    // Bold formatting for WhatsApp (*Heading:*) - Cleaned without scrutiny mode
     const whatsappFormatted = `*Name:* ${form.name.trim()}
 *Mobile Number:* ${form.mobile.trim()}
 *Email:* ${form.email.trim() || 'N/A'}
 *CET Registration No.:* ${form.cetRegNo.trim() || 'N/A'}
 *CAP Application No.:* ${form.capAppNo.trim() || 'N/A'}
 *Course Name:* ${form.courseName.trim()}
-*Scrutiny Mode:* ${form.scrutinyMode}
 *Ticket No -* ${assignedTicket}
 
 *Query -*
@@ -156,7 +175,6 @@ ${form.query.trim()}`;
       cetNo: form.cetRegNo.trim().toUpperCase(),
       capId: form.capAppNo.trim().toUpperCase(),
       course: form.courseName.trim(),
-      scrutinyMode: form.scrutinyMode,
       query: form.query.trim(),
       formattedText: whatsappFormatted,
       status: 'Open',
@@ -169,7 +187,7 @@ ${form.query.trim()}`;
     saveTicketRecord(newRecord);
 
     setStatusMessage({
-      text: `WhatsApp Ticket ${assignedTicket} generated & saved to Counsellor Tickets database!`,
+      text: `WhatsApp Ticket ${assignedTicket} generated & saved to database!`,
       type: 'success',
     });
   };
@@ -199,7 +217,6 @@ ${form.query.trim()}`;
       cetRegNo: '',
       capAppNo: '',
       courseName: '',
-      scrutinyMode: 'E-Scrutiny Mode',
       ticketNo: '',
       query: '',
     });
@@ -387,40 +404,6 @@ ${form.query.trim()}`;
                     </div>
                   </div>
 
-                  {/* Scrutiny Mode (e scrutiny mode / physical) */}
-                  <div className="pt-1">
-                    <label className="block text-xs font-bold text-[#374151] mb-1.5">
-                      Scrutiny Mode:
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => handleScrutinySelect('E-Scrutiny Mode')}
-                        className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                          form.scrutinyMode === 'E-Scrutiny Mode'
-                            ? 'bg-[#0056A6] text-white border-[#003B73] shadow-xs'
-                            : 'bg-white text-[#4B5563] border-[#D9E1EA] hover:bg-[#F7F9FC]'
-                        }`}
-                      >
-                        <span className="w-2 h-2 rounded-full bg-current"></span>
-                        E-Scrutiny Mode
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleScrutinySelect('Physical Scrutiny Mode')}
-                        className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                          form.scrutinyMode === 'Physical Scrutiny Mode'
-                            ? 'bg-[#0056A6] text-white border-[#003B73] shadow-xs'
-                            : 'bg-white text-[#4B5563] border-[#D9E1EA] hover:bg-[#F7F9FC]'
-                        }`}
-                      >
-                        <span className="w-2 h-2 rounded-full bg-current"></span>
-                        Physical Scrutiny Mode
-                      </button>
-                    </div>
-                  </div>
-
                   {/* Ticket No */}
                   <div className="pt-1">
                     <div className="flex items-center justify-between mb-1">
@@ -451,26 +434,6 @@ ${form.query.trim()}`;
                     <label className="block text-xs font-bold text-[#374151] mb-1">
                       Query - : <span className="text-red-500">*</span>
                     </label>
-
-                    {/* Quick suggestion tags */}
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {[
-                        'Document Verification Pending',
-                        'Discrepancy In E-Scrutiny Receipt',
-                        'Category Certificate Update',
-                        'Name Spelling Correction',
-                        'Income / NCL Certificate Clarification',
-                      ].map((preset) => (
-                        <button
-                          key={preset}
-                          type="button"
-                          onClick={() => handleQuickQuery(preset)}
-                          className="text-[11px] px-2.5 py-1 rounded-lg bg-[#EAF4FB] text-[#0056A6] border border-[#D9E1EA] hover:bg-[#dbebf9] transition-colors cursor-pointer"
-                        >
-                          + {preset}
-                        </button>
-                      ))}
-                    </div>
 
                     <textarea
                       name="query"

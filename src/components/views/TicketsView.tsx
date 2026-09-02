@@ -38,17 +38,20 @@ import {
   deleteTicketRecord,
   updateTicketStatus,
 } from '../../services/ticketService';
+import { WhatsappInitialData } from '../WhatsappTicketModal';
 
 interface TicketsViewProps {
   currentUser?: UserProfile | null;
   onOpenTicketTool: () => void;
   onOpenWhatsappTool: () => void;
+  onOpenWhatsappWithData?: (data: WhatsappInitialData) => void;
 }
 
 export const TicketsView: React.FC<TicketsViewProps> = ({
   currentUser,
   onOpenTicketTool,
   onOpenWhatsappTool,
+  onOpenWhatsappWithData,
 }) => {
   const [tickets, setTickets] = useState<TicketRecord[]>(() => getTicketRecords());
   const [searchTerm, setSearchTerm] = useState('');
@@ -760,6 +763,28 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
                     >
                       <MessageCircle className="w-4 h-4" />
                     </button>
+
+                    {onOpenWhatsappWithData && (
+                      <button
+                        onClick={() => {
+                          onOpenWhatsappWithData({
+                            name: ticket.candidateName,
+                            mobile: ticket.mobile,
+                            email: ticket.email,
+                            cetRegNo: ticket.cetNo,
+                            capAppNo: ticket.capId,
+                            courseName: ticket.course,
+                            ticketNo: ticket.ticketNo,
+                            query: ticket.query,
+                          });
+                        }}
+                        className="px-2 py-1 rounded-lg text-[11px] font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-colors cursor-pointer flex items-center gap-1"
+                        title="Create or edit WhatsApp notice for this ticket"
+                      >
+                        <Send className="w-3 h-3" />
+                        <span>Notice</span>
+                      </button>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-1.5">
@@ -909,10 +934,30 @@ export const TicketsView: React.FC<TicketsViewProps> = ({
                           <button
                             onClick={() => handleDirectWhatsApp(ticket)}
                             className="p-1 text-emerald-600 hover:text-emerald-800"
-                            title="WhatsApp"
+                            title="Direct WhatsApp Share"
                           >
                             <MessageCircle className="w-4 h-4" />
                           </button>
+                          {onOpenWhatsappWithData && (
+                            <button
+                              onClick={() => {
+                                onOpenWhatsappWithData({
+                                  name: ticket.candidateName,
+                                  mobile: ticket.mobile,
+                                  email: ticket.email,
+                                  cetRegNo: ticket.cetNo,
+                                  capAppNo: ticket.capId,
+                                  courseName: ticket.course,
+                                  ticketNo: ticket.ticketNo,
+                                  query: ticket.query,
+                                });
+                              }}
+                              className="p-1 text-emerald-700 hover:text-emerald-900"
+                              title="Open in WhatsApp Notice Dispatcher"
+                            >
+                              <Send className="w-4 h-4" />
+                            </button>
+                          )}
                           <button
                             onClick={() => handleDeleteTicket(ticket.id)}
                             className="p-1 text-slate-400 hover:text-rose-600"

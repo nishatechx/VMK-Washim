@@ -17,10 +17,12 @@ import {
   GraduationCap,
   Hash,
   Users,
+  MessageCircle,
 } from 'lucide-react';
 import { getStudentRecords, getCurrentUser } from '../services/authService';
 import { saveTicketRecord } from '../services/ticketService';
 import { UserProfile, TicketRecord } from '../types/auth';
+import { WhatsappInitialData } from './WhatsappTicketModal';
 
 export interface TicketState {
   cetNo: string;
@@ -44,6 +46,7 @@ interface TicketGeneratorModalProps {
     course?: string;
   };
   currentUser?: UserProfile | null;
+  onOpenWhatsappWithData?: (data: WhatsappInitialData) => void;
 }
 
 const COMMON_COURSES = [
@@ -67,6 +70,7 @@ export const TicketGeneratorModal: React.FC<TicketGeneratorModalProps> = ({
   onClose,
   initialCandidate,
   currentUser,
+  onOpenWhatsappWithData,
 }) => {
   // 8 Mandatory Ticket Fields
   const [ticketForm, setTicketForm] = useState<TicketState>({
@@ -590,6 +594,30 @@ Query: ${query.trim()}`;
                           <Printer className="w-4 h-4 text-[#0056A6]" />
                           <span>Print Slip</span>
                         </button>
+
+                        {onOpenWhatsappWithData && (
+                          <button
+                            id="forward-to-whatsapp-btn"
+                            type="button"
+                            onClick={() => {
+                              onOpenWhatsappWithData({
+                                name: ticketForm.candidateName.trim(),
+                                mobile: ticketForm.mobile.trim(),
+                                email: ticketForm.email.trim(),
+                                cetRegNo: ticketForm.cetNo.trim().toUpperCase(),
+                                capAppNo: ticketForm.capId.trim().toUpperCase(),
+                                courseName: ticketForm.course.trim(),
+                                ticketNo: generatedTicketNo || undefined,
+                                query: ticketForm.query.trim(),
+                              });
+                            }}
+                            className="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-95"
+                            title="Reflect this created ticket data into WhatsApp notice"
+                          >
+                            <MessageCircle className="w-4 h-4 text-white" />
+                            <span>Dispatch to WhatsApp</span>
+                          </button>
+                        )}
                       </>
                     )}
 
