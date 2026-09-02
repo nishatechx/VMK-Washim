@@ -306,6 +306,59 @@ if (typeof window !== 'undefined') {
   }, 100);
 }
 
+export async function saveUserAsync(user: UserProfile): Promise<{ success: boolean; message: string }> {
+  try {
+    const users = getAllUsers();
+    const existingIndex = users.findIndex((u) => u.id === user.id);
+
+    // Check duplicate username for another user
+    const usernameTaken = users.some(
+      (u) => u.username.toLowerCase() === user.username.toLowerCase() && u.id !== user.id
+    );
+    if (usernameTaken) {
+      return { success: false, message: `Username "${user.username}" is already taken.` };
+    }
+
+    const cleanUser: UserProfile = {
+      ...user,
+      username: user.username.trim().toLowerCase(),
+      fullName: user.fullName?.trim() || user.username.trim(),
+    };
+
+    if (existingIndex >= 0) {
+      users[existingIndex] = { ...users[existingIndex], ...cleanUser };
+      // Handle profile picture removal if explicitly empty/undefined
+      if (!cleanUser.profilePicture) {
+        delete users[existingIndex].profilePicture;
+      }
+    } else {
+      users.push(cleanUser);
+    }
+
+    // Save to local storage
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+    notifyUserSubscribers(users);
+
+    // Update current session if the edited user is currently logged in
+    const currentUser = getCurrentUser();
+    if (currentUser && (currentUser.id === user.id || currentUser.username.toLowerCase() === user.username.toLowerCase())) {
+      setCurrentUser(cleanUser);
+    }
+
+    // Save directly to Firestore cloud database so any device on Vercel/Netlify/Cloud can sync
+    try {
+      await setDoc(doc(db, 'users', cleanUser.id), sanitizeForFirestore(cleanUser));
+    } catch (e: any) {
+      console.warn('Firestore saveUser cloud sync notice:', e?.message);
+    }
+
+    return { success: true, message: 'User profile saved successfully and synced to cloud.' };
+  } catch (err) {
+    console.error('Error saving user:', err);
+    return { success: false, message: 'Failed to save user profile.' };
+  }
+}
+
 export function saveUser(user: UserProfile): { success: boolean; message: string } {
   try {
     const users = getAllUsers();
@@ -319,26 +372,35 @@ export function saveUser(user: UserProfile): { success: boolean; message: string
       return { success: false, message: `Username "${user.username}" is already taken.` };
     }
 
+    const cleanUser: UserProfile = {
+      ...user,
+      username: user.username.trim().toLowerCase(),
+      fullName: user.fullName?.trim() || user.username.trim(),
+    };
+
     if (existingIndex >= 0) {
-      users[existingIndex] = { ...users[existingIndex], ...user };
+      users[existingIndex] = { ...users[existingIndex], ...cleanUser };
+      if (!cleanUser.profilePicture) {
+        delete users[existingIndex].profilePicture;
+      }
     } else {
-      users.push(user);
+      users.push(cleanUser);
     }
 
     // Save to local storage
     localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
     notifyUserSubscribers(users);
 
-    // Save directly to Firestore cloud database so any device on Netlify/Cloud can log in
-    setDoc(doc(db, 'users', user.id), sanitizeForFirestore(user), { merge: true }).catch((e) => {
-      console.warn('Firestore saveUser background sync notice:', e?.message);
-    });
-
     // Update current session if the edited user is currently logged in
     const currentUser = getCurrentUser();
-    if (currentUser && currentUser.id === user.id) {
-      setCurrentUser(user);
+    if (currentUser && (currentUser.id === user.id || currentUser.username.toLowerCase() === user.username.toLowerCase())) {
+      setCurrentUser(cleanUser);
     }
+
+    // Save directly to Firestore cloud database so any device on Netlify/Cloud can log in
+    setDoc(doc(db, 'users', cleanUser.id), sanitizeForFirestore(cleanUser)).catch((e) => {
+      console.warn('Firestore saveUser background sync notice:', e?.message);
+    });
 
     return { success: true, message: 'User profile saved successfully and synced to cloud.' };
   } catch (err) {
@@ -451,6 +513,36 @@ export function authenticate(username: string, pass: string): UserProfile | null
     return updated;
   }
   return null;
+}
+
+export async function findUserByUsername(username: string): Promise<UserProfile | null> {
+  const trimmed = username.trim().toLowerCase();
+  if (!trimmed) return null;
+
+  // 1. Check local memory/storage
+  const localUsers = getAllUsers();
+  const localFound = localUsers.find(
+    (u) => u.username.toLowerCase() === trimmed || u.id.toLowerCase() === trimmed
+  );
+  if (localFound) return localFound;
+
+  if (trimmed === 'dno') return DNO_USER;
+
+  // 2. Query Firestore directly if not found locally
+  try {
+    const snap = await getDocs(collection(db, 'users'));
+    let found: UserProfile | null = null;
+    snap.forEach((d) => {
+      const data = d.data() as UserProfile;
+      if (data && (data.username?.toLowerCase() === trimmed || d.id.toLowerCase() === trimmed)) {
+        found = { ...data, id: d.id };
+      }
+    });
+    return found;
+  } catch (err) {
+    console.warn('Error finding user by username in Firestore:', err);
+    return null;
+  }
 }
 
 export function getCurrentUser(): UserProfile | null {

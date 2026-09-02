@@ -36,55 +36,64 @@ export function fileToBase64(file: File | Blob): Promise<string> {
 }
 
 /**
- * Resize and compress image to keep data fast and lightweight for Firebase storage
+ * Resize and compress image to keep data fast, lightweight and guaranteed to save
  */
 export async function compressImage(
   file: File | Blob,
-  maxWidth = 480,
-  maxHeight = 480,
-  quality = 0.82
+  maxWidth = 320,
+  maxHeight = 320,
+  quality = 0.8
 ): Promise<string> {
   return new Promise((resolve) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
+    const reader = new FileReader();
+    reader.onload = (readerEvent) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
 
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      const canvas = document.createElement('canvas');
-      let width = img.width;
-      let height = img.height;
-
-      if (width > height) {
-        if (width > maxWidth) {
-          height = Math.round((height * maxWidth) / width);
-          width = maxWidth;
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
         }
-      } else {
-        if (height > maxHeight) {
-          width = Math.round((width * maxHeight) / height);
-          height = maxHeight;
-        }
-      }
 
-      canvas.width = Math.max(1, width);
-      canvas.height = Math.max(1, height);
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL('image/jpeg', quality);
-        resolve(dataUrl);
-      } else {
-        fileToBase64(file).then(resolve);
-      }
+        canvas.width = Math.max(1, width);
+        canvas.height = Math.max(1, height);
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          // Smooth rendering
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(dataUrl);
+        } else {
+          resolve(readerEvent.target?.result as string || '');
+        }
+      };
+
+      img.onerror = () => {
+        resolve(readerEvent.target?.result as string || '');
+      };
+
+      img.src = readerEvent.target?.result as string;
     };
 
-    img.onerror = () => {
-      fileToBase64(file).then(resolve);
+    reader.onerror = () => {
+      resolve('');
     };
 
-    img.src = url;
+    reader.readAsDataURL(file);
   });
 }
 

@@ -19,6 +19,7 @@ import { LoginScreen } from './components/LoginScreen';
 import {
   getCurrentUser,
   setCurrentUser,
+  subscribeToUsers,
   DNO_USER,
   hasTabPermission,
   hasFeaturePermission,
@@ -91,6 +92,21 @@ export default function App() {
         setQrSessionParam(session);
       }
     }
+
+    // Subscribe to live user updates to keep avatar & profile synced
+    const unsubscribe = subscribeToUsers((users) => {
+      const cur = getCurrentUser();
+      if (cur) {
+        const fresh = users.find(
+          (u) => u.id === cur.id || u.username.toLowerCase() === cur.username.toLowerCase()
+        );
+        if (fresh) {
+          setCurUser(fresh);
+        }
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   // Handle Mobile QR scanning view if session exists in URL

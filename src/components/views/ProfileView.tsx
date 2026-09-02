@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { UserProfile } from '../../types/auth';
 import { uploadImageToFirebase } from '../../services/imageStorageService';
-import { saveUser } from '../../services/authService';
+import { saveUserAsync } from '../../services/authService';
 
 interface ProfileViewProps {
   onLogout: () => void;
@@ -52,15 +52,19 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       const res = await uploadImageToFirebase(file, `${currentUser.username}_profile`, currentUser.id);
       const photoUrl = res.displayUrl || res.url;
 
+      if (!photoUrl) {
+        throw new Error('Image could not be encoded');
+      }
+
       const updatedUser: UserProfile = {
         ...currentUser,
         profilePicture: photoUrl,
       };
 
-      const saveRes = saveUser(updatedUser);
+      const saveRes = await saveUserAsync(updatedUser);
       if (saveRes.success) {
         setUploadMsg({
-          text: 'Profile picture saved directly to Firebase Cloud Database!',
+          text: 'Profile photo saved and updated in your profile!',
           type: 'success',
         });
         if (onRefreshSession) {
@@ -71,21 +75,33 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       }
     } catch (err: any) {
       console.error('Profile photo error:', err);
-      setUploadMsg({ text: 'Could not process image. Please try another image.', type: 'error' });
+      setUploadMsg({ text: 'Could not save photo. Please try a smaller image.', type: 'error' });
     } finally {
       setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
-  const handleRemovePhoto = () => {
+  const handleRemovePhoto = async () => {
     if (!currentUser) return;
-    const updatedUser: UserProfile = { ...currentUser };
-    delete updatedUser.profilePicture;
-    saveUser(updatedUser);
-    if (onRefreshSession) {
-      onRefreshSession();
+    try {
+      setIsUploading(true);
+      const updatedUser: UserProfile = { ...currentUser };
+      delete updatedUser.profilePicture;
+      const saveRes = await saveUserAsync(updatedUser);
+      if (saveRes.success) {
+        setUploadMsg({ text: 'Profile picture removed successfully.', type: 'success' });
+        if (onRefreshSession) {
+          onRefreshSession();
+        }
+      }
+    } catch (err) {
+      console.error('Remove photo error:', err);
+    } finally {
+      setIsUploading(false);
     }
-    setUploadMsg({ text: 'Profile picture removed.', type: 'success' });
   };
 
   return (

@@ -30,7 +30,7 @@ import { UserProfile, TabPermission, FeaturePermission, UserRole } from '../../t
 import {
   getAllUsers,
   subscribeToUsers,
-  saveUser,
+  saveUserAsync,
   deleteUser,
   AVAILABLE_TABS,
   AVAILABLE_FEATURES,
@@ -222,7 +222,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
     }
   };
 
-  const handleSaveForm = (e: React.FormEvent) => {
+  const handleSaveForm = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!username.trim()) {
@@ -257,7 +257,7 @@ export const UserManagementView: React.FC<UserManagementViewProps> = ({
       ...(editingUser?.lastLogin ? { lastLogin: editingUser.lastLogin } : {}),
     };
 
-    const res = saveUser(newUser);
+    const res = await saveUserAsync(newUser);
     if (!res.success) {
       setFeedback({ message: res.message, type: 'error' });
       return;
